@@ -182,16 +182,16 @@ elif st.session_state.page == "Log Water":
 
     # Change mascot based on progress
     if progress < 0.2:
-        mascot_path = r"image/stay-hydrated 1.gif"
+        mascot_path = r"image/hardrated 1.webp"
         message = "🌵 You're dehydrated! Start sipping!"
     elif progress < 0.5:
         mascot_path = r"image/happy-cute hydration 2.gif"
         message = "😊 Good start! Keep it up!"
     elif progress < 1.0:
-        mascot_path = "mascots/strong.gif"
+        mascot_path = r"image/hydrated 3.webp"
         message = "💪 Almost there! You're doing great!"
     else:
-        mascot_path = "mascots/celebrate.gif"
+        mascot_path = r"image/strong 4.webp"
         message = "🎉 Goal achieved! Excellent job!"
 
     st.markdown(f"### {message}")
@@ -202,6 +202,7 @@ elif st.session_state.page == "Log Water":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
