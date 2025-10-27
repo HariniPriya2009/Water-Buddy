@@ -212,19 +212,9 @@ elif st.session_state.page == "Log Water":
     st.progress(min(progress, 1.0))
     st.write(f"**Today's Intake:** {today_total} ml / 2000 ml")
 
- if st.button("♻️ Reset Today's Progress"):
-        user["log"][today] = 0.0
-        save_data(data)
-        st.session_state.mascot = normal_mascot
-        st.warning("Today's progress has been reset.")
-        st.rerun()
-
-    # Weekly summary
-    st.markdown("---")
-    st.subheader("📊 Past 7 Days Overview")
-    show_week_chart(user)
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
