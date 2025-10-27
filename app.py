@@ -7,6 +7,85 @@ from datetime import datetime, timedelta, date, time  # Added time import
 import requests
 
 # ---------- CONFIG ----------
+st.set_page_config(page_title="Hydration Login", layout="centered")
+
+# ---------- FUNCTIONS ----------
+def hash_password(password):
+    """Hashes the password for secure storage."""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def load_users():
+    """Loads saved user data from JSON file."""
+    if os.path.exists("users.json"):
+        with open("users.json", "r") as file:
+            return json.load(file)
+    return {}
+
+def save_users(users):
+    """Saves user data to JSON file."""
+    with open("users.json", "w") as file:
+        json.dump(users, file)
+
+# ---------- MAIN UI ----------
+st.title("💧 Welcome to WaterBuddy Login")
+
+gif_path = "C:/Users/Harini Priya/AppData/Local/Programs/Python/Python310/strong water drop.webp"  # change to your GIF path
+st.image(gif_path, width=300)
+
+# Tabs for Login and Signup
+tabs = st.tabs(["🔐 Login", "📝 Signup"])
+users = load_users()
+
+# ---------- LOGIN TAB ----------
+with tabs[0]:
+    st.subheader("Login to your account")
+    username = st.text_input("Username", key="login_user")
+    password = st.text_input("Password", type="password", key="login_pass")
+
+    if st.button("Login"):
+        if username in users and users[username] == hash_password(password):
+            st.success(f"Welcome back, {username}! 🎉")
+        else:
+            st.error("Invalid username or password. Please try again.")
+
+# ---------- SIGNUP TAB ----------
+with tabs[1]:
+    st.subheader("Create a new account")
+    new_username = st.text_input("Choose a username", key="signup_user")
+    new_password = st.text_input("Choose a password", type="password", key="signup_pass")
+
+    if st.button("Sign Up"):
+        hashed_pass = hash_password(new_password)
+        # Check for duplicate password
+        if hashed_pass in users.values():
+            st.error("⚠️ That password is already used by another account. Please choose a different one.")
+        elif new_username in users:
+            st.warning("Username already exists! Try a different one.")
+        elif len(new_password) < 4:
+            st.warning("Password too short! Use at least 4 characters.")
+        else:
+            users[new_username] = hashed_pass
+            save_users(users)
+            st.success("✅ Account created successfully! You can now log in.")
+
+# ---------- STYLE ----------
+hide_menu = """
+<style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    .stApp {
+        background-color: white;
+        color: black;
+        text-align: center;
+    }
+    .stTabs [data-baseweb="tab-list"] {
+        justify-content: center;
+    }
+</style>
+"""
+st.markdown(hide_menu, unsafe_allow_html=True)
+🧩 Notes:
+# ---------- CONFIG ----------
 st.set_page_config(page_title="WaterBuddy — SipSmart", page_icon="💧", layout="centered")
 
 # ---------- STYLE ----------
@@ -341,4 +420,5 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
