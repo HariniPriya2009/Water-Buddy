@@ -182,7 +182,7 @@ elif st.session_state.page == "Log Water":
 
     # Change mascot based on progress
     if progress < 0.2:
-        mascot_path = r"C:\Users\Harini Priya\AppData\Local\Programs\Python\Python310\water buddy\stay-hydrated 1.gif"
+        mascot_path = r"image/happy-cute hydration 2.gif"
         message = "🌵 You're dehydrated! Start sipping!"
     elif progress < 0.5:
         mascot_path = r"C:\Users\Harini Priya\AppData\Local\Programs\Python\Python310\water buddy\happy-cute hydration 2.gif"
@@ -202,5 +202,6 @@ elif st.session_state.page == "Log Water":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
