@@ -164,6 +164,18 @@ elif st.session_state.page == "Log Water":
 
     custom = st.number_input("Custom amount (ml):", 100, 1000, 250, 50)
 
+
+    if st.button("💧 Add 0.25 L"):
+        user["log"][today] = user["log"].get(today, 0.0) + 0.25
+        save_data(data)
+        st.session_state.mascot = happy_mascot
+        st.image(st.session_state.mascot, use_container_width=False)
+        st.success("Nice! You added 0.25 L.")
+        time.sleep(1.5)
+        st.session_state.mascot = normal_mascot
+        st.rerun()
+
+    
     if st.button("Add Drink 💧"):
         amt = amount or custom
         ds = today_str()
@@ -200,8 +212,20 @@ elif st.session_state.page == "Log Water":
     st.progress(min(progress, 1.0))
     st.write(f"**Today's Intake:** {today_total} ml / 2000 ml")
 
+ if st.button("♻️ Reset Today's Progress"):
+        user["log"][today] = 0.0
+        save_data(data)
+        st.session_state.mascot = normal_mascot
+        st.warning("Today's progress has been reset.")
+        st.rerun()
+
+    # Weekly summary
+    st.markdown("---")
+    st.subheader("📊 Past 7 Days Overview")
+    show_week_chart(user)
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
