@@ -6,7 +6,6 @@ import os
 from datetime import datetime, timedelta, date, time
 import requests
 import hashlib
-from streamlit_lottie import st_lottie   # ✅ required for Lottie animations
 
 # ---------- CONFIG ----------
 st.set_page_config(page_title="Hydration Login", layout="centered")
@@ -27,3 +26,4 @@ def save_users(users):
     """Saves user data to JSON file."""
     with open("users.json", "w") as file:
         json.dump(users, file)
+
