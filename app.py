@@ -4,7 +4,6 @@ import altair as alt
 import json
 import os
 from datetime import datetime, timedelta, date, time  # Added time import
-from streamlit_lottie import st_lottie
 import requests
 
 # ---------- CONFIG ----------
@@ -664,7 +663,8 @@ save_data(data)
 ##        st.success("All data deleted. You are now logged out.")
 ##
 ### ---------- SAVE ----------
-##save_data(data)
+##save_data(data)
+
 ##
 
 
@@ -2375,3 +2375,4 @@ save_data(data)
 ##
 ### ---------- SAVE ----------
 ##save_data(data)
+
