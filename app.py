@@ -163,18 +163,6 @@ elif st.session_state.page == "Log Water":
     if col4.button("500 ml"): amount = 500
 
     custom = st.number_input("Custom amount (ml):", 100, 1000, 250, 50)
-
-
-    if st.button("💧 Add 0.25 L"):
-        user["log"][today] = user["log"].get(today, 0.0) + 0.25
-        save_data(data)
-        st.session_state.mascot = happy_mascot
-        st.image(st.session_state.mascot, use_container_width=False)
-        st.success("Nice! You added 0.25 L.")
-        time.sleep(1.5)
-        st.session_state.mascot = normal_mascot
-        st.rerun()
-
     
     if st.button("Add Drink 💧"):
         amt = amount or custom
@@ -214,6 +202,7 @@ elif st.session_state.page == "Log Water":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
