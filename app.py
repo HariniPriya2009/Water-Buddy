@@ -249,29 +249,59 @@ elif st.session_state.page == "Challenges":
             )
 
 # ---------- BADGES ----------
-# ---------- BADGES + STREAKS ----------
+# ---------- BADGES + STREAKS (Styled) ----------
 elif st.session_state.page == "Badges":
     navbar()
-    
-    # ✅ Load user data
     data = load_data()
     users = data["users"]
     user = ensure_user(st.session_state.user)
 
-    st.header("🏅 Your Badges & Streaks")
+    st.markdown("""
+        <style>
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Poppins', sans-serif !important;
+        }
+        .stMetric label {
+            font-size: 1.1rem !important;
+            color: #00B4D8 !important;
+        }
+        .stMetric div[data-testid="stMetricValue"] {
+            font-size: 2rem !important;
+            color: #48CAE4 !important;
+            font-weight: 600;
+        }
+        .stProgress > div > div {
+            background: linear-gradient(90deg, #00B4D8, #48CAE4, #90E0EF);
+        }
+        .badge-box {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .badge-title {
+            font-size: 1.4rem;
+            color: #FFD166;
+            font-weight: 700;
+        }
+        .badge-text {
+            color: #FFFFFFCC;
+            font-size: 1.1rem;
+        }
+        .stMarkdown {
+            font-family: 'Poppins', sans-serif !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
 
-    if "badges" not in user:
-        user["badges"] = []
-    if "history" not in user:
-        user["history"] = {}
-    if "challenges" not in user:
-        user["challenges"] = []
+    st.markdown("<h2 style='color:#FFD166;'>🏅 Your Badges & Streaks</h2>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#F07167;'>🔥 Your Hydration Streaks</h3>", unsafe_allow_html=True)
 
-    badges_earned = []
+    # --- streak calculation ---
     from datetime import datetime, timedelta
     today = datetime.now().date()
 
-    # --- 🧮 Calculate streaks ---
     if user["history"]:
         sorted_days = sorted(user["history"].keys())
         streak = 1
@@ -287,7 +317,6 @@ elif st.session_state.page == "Badges":
                 streak = 1
             prev_date = curr_date
 
-        # If last logged date is not today, streak resets
         last_date = datetime.strptime(sorted_days[-1], "%Y-%m-%d").date()
         if (today - last_date).days >= 2:
             streak = 0
@@ -295,8 +324,6 @@ elif st.session_state.page == "Badges":
         streak = 0
         longest_streak = 0
 
-    # --- Display streak info ---
-    st.subheader("🔥 Your Hydration Streaks")
     col1, col2 = st.columns(2)
     col1.metric("Current Streak", f"{streak} days 💧")
     col2.metric("Longest Streak", f"{longest_streak} days 🏆")
@@ -304,20 +331,21 @@ elif st.session_state.page == "Badges":
     next_goal = 7 if streak < 7 else (30 if streak < 30 else 60)
     progress = min(streak / next_goal, 1.0)
     st.progress(progress)
-    st.caption(f"{streak}/{next_goal} days toward your next streak milestone!")
+    st.markdown(f"<p style='color:#ADE8F4;font-size:1.1rem;'>{streak}/{next_goal} days toward your next milestone!</p>", unsafe_allow_html=True)
 
-    # Motivational messages
+    # --- motivational messages ---
     if streak == 0:
-        st.warning("Let’s start your streak again today! 💦")
+        st.markdown("<p style='color:#FFD6A5;font-size:1.1rem;'>💦 Let’s start your streak again today!</p>", unsafe_allow_html=True)
     elif streak < 7:
-        st.info("Keep it up! You’re building your hydration habit 💧")
+        st.markdown("<p style='color:#CAF0F8;font-size:1.1rem;'>Keep it up! You’re building your hydration habit 💧</p>", unsafe_allow_html=True)
     elif streak < 30:
-        st.success("Amazing consistency! Stay hydrated like a pro 🥤")
+        st.markdown("<p style='color:#BDE0FE;font-size:1.2rem;'>Amazing consistency! Stay hydrated like a pro 🥤</p>", unsafe_allow_html=True)
     else:
         st.balloons()
-        st.success("You’re a hydration legend! 🌊👑")
+        st.markdown("<p style='color:#FFC8DD;font-size:1.3rem;font-weight:bold;'>You’re a hydration legend! 🌊👑</p>", unsafe_allow_html=True)
 
-    # --- 🏅 Badges ---
+    # --- badges ---
+    badges_earned = []
     total_drinks = sum(len(day.get("entries", [])) for day in user["history"].values())
     if total_drinks >= 1 and "💧 First Sip!" not in user["badges"]:
         user["badges"].append("💧 First Sip!")
@@ -349,24 +377,22 @@ elif st.session_state.page == "Badges":
             user["badges"].append(f"✅ Completed: {ch['name']}")
             badges_earned.append(f"Your challenge **{ch['name']}** was successfully completed! 🎉")
 
-    # --- Display badges ---
-    st.subheader("🏆 Your Earned Badges")
+    # --- display badges ---
+    st.markdown("<h3 style='color:#FFD166;'>🏆 Your Earned Badges</h3>", unsafe_allow_html=True)
     if not user["badges"]:
         st.info("No badges yet — keep hydrating to earn them!")
     else:
         for b in user["badges"]:
-            st.success(f"🏅 {b}")
+            st.markdown(f"<div class='badge-box'><span class='badge-title'>{b}</span></div>", unsafe_allow_html=True)
 
     if badges_earned:
-        st.markdown("### 🎉 New Achievements!")
+        st.markdown("<h3 style='color:#FFF;'>🎉 New Achievements!</h3>", unsafe_allow_html=True)
         for msg in badges_earned:
             st.balloons()
-            st.success(msg)
+            st.markdown(f"<div class='badge-box'><span class='badge-text'>{msg}</span></div>", unsafe_allow_html=True)
 
-    # ✅ Save user data
     users[st.session_state.user] = user
     save_data(data)
-
 
 # ---------- SETTINGS ----------
 elif st.session_state.page == "Settings":
@@ -409,6 +435,7 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
