@@ -249,62 +249,113 @@ elif st.session_state.page == "Challenges":
             )
 
 # ---------- BADGES ----------
-# ---------- BADGES ----------
+# ---------- BADGES + STREAKS ----------
 elif st.session_state.page == "Badges":
     navbar()
     
-    # ✅ Fix: Load data and users correctly
+    # ✅ Load user data
     data = load_data()
     users = data["users"]
     user = ensure_user(st.session_state.user)
 
-    st.header("🏅 Your Badges")
+    st.header("🏅 Your Badges & Streaks")
 
     if "badges" not in user:
         user["badges"] = []
-    if "drinks" not in user:
-        user["drinks"] = []
+    if "history" not in user:
+        user["history"] = {}
     if "challenges" not in user:
         user["challenges"] = []
 
     badges_earned = []
+    from datetime import datetime, timedelta
+    today = datetime.now().date()
 
-    # --- Badge conditions ---
-    # 1️⃣ First Sip
+    # --- 🧮 Calculate streaks ---
+    if user["history"]:
+        sorted_days = sorted(user["history"].keys())
+        streak = 1
+        longest_streak = 1
+        prev_date = datetime.strptime(sorted_days[0], "%Y-%m-%d").date()
+
+        for d in sorted_days[1:]:
+            curr_date = datetime.strptime(d, "%Y-%m-%d").date()
+            if (curr_date - prev_date).days == 1:
+                streak += 1
+                longest_streak = max(longest_streak, streak)
+            else:
+                streak = 1
+            prev_date = curr_date
+
+        # If last logged date is not today, streak resets
+        last_date = datetime.strptime(sorted_days[-1], "%Y-%m-%d").date()
+        if (today - last_date).days >= 2:
+            streak = 0
+    else:
+        streak = 0
+        longest_streak = 0
+
+    # --- Display streak info ---
+    st.subheader("🔥 Your Hydration Streaks")
+    col1, col2 = st.columns(2)
+    col1.metric("Current Streak", f"{streak} days 💧")
+    col2.metric("Longest Streak", f"{longest_streak} days 🏆")
+
+    next_goal = 7 if streak < 7 else (30 if streak < 30 else 60)
+    progress = min(streak / next_goal, 1.0)
+    st.progress(progress)
+    st.caption(f"{streak}/{next_goal} days toward your next streak milestone!")
+
+    # Motivational messages
+    if streak == 0:
+        st.warning("Let’s start your streak again today! 💦")
+    elif streak < 7:
+        st.info("Keep it up! You’re building your hydration habit 💧")
+    elif streak < 30:
+        st.success("Amazing consistency! Stay hydrated like a pro 🥤")
+    else:
+        st.balloons()
+        st.success("You’re a hydration legend! 🌊👑")
+
+    # --- 🏅 Badges ---
     total_drinks = sum(len(day.get("entries", [])) for day in user["history"].values())
     if total_drinks >= 1 and "💧 First Sip!" not in user["badges"]:
         user["badges"].append("💧 First Sip!")
         badges_earned.append("WOWW! You’ve got your first sip — great start!")
 
-    # 2️⃣ 1 Week and 1 Month badges
     if "start_date" not in user:
-        user["start_date"] = list(user["history"].keys())[0] if user["history"] else today_str()
+        user["start_date"] = sorted(user["history"].keys())[0] if user["history"] else today.strftime("%Y-%m-%d")
 
-    from datetime import datetime
     try:
         start_date = datetime.strptime(user["start_date"], "%Y-%m-%d")
         days_since = (datetime.now() - start_date).days
+
         if days_since >= 7 and "🌈 Hydration Hero (1 Week)" not in user["badges"]:
             user["badges"].append("🌈 Hydration Hero (1 Week)")
             badges_earned.append("You've completed your first week — you’re a Hydration Hero! 💪")
+
         if days_since >= 30 and "🏆 Aqua Master (1 Month)" not in user["badges"]:
             user["badges"].append("🏆 Aqua Master (1 Month)")
             badges_earned.append("One month strong! You’ve earned the Aqua Master badge! 🌊")
     except Exception:
         pass
 
-    # 3️⃣ Completed challenge badges
+    if longest_streak >= 7 and "👑 Consistency King" not in user["badges"]:
+        user["badges"].append("👑 Consistency King")
+        badges_earned.append("You've logged water for 7 days in a row — you’re the Consistency King! 👑💧")
+
     for ch in user["challenges"]:
         if ch.get("done") and f"✅ Completed: {ch['name']}" not in user["badges"]:
             user["badges"].append(f"✅ Completed: {ch['name']}")
             badges_earned.append(f"Your challenge **{ch['name']}** was successfully completed! 🎉")
 
     # --- Display badges ---
+    st.subheader("🏆 Your Earned Badges")
     if not user["badges"]:
         st.info("No badges yet — keep hydrating to earn them!")
     else:
         for b in user["badges"]:
-            st.success(f"🏆 {b}")
+            st.success(f"🏅 {b}")
 
     if badges_earned:
         st.markdown("### 🎉 New Achievements!")
@@ -312,9 +363,10 @@ elif st.session_state.page == "Badges":
             st.balloons()
             st.success(msg)
 
-    # ✅ Save user safely
+    # ✅ Save user data
     users[st.session_state.user] = user
     save_data(data)
+
 
 # ---------- SETTINGS ----------
 elif st.session_state.page == "Settings":
@@ -357,6 +409,7 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
