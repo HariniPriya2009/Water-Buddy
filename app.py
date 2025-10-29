@@ -256,16 +256,20 @@ elif st.session_state.page == "Badges":
     users = data["users"]
     user = ensure_user(st.session_state.user)
 
- st.markdown("""
-    <style>
-        h1, h3, p {
-            font-family: 'Poppins', sans-serif;
-        }
-        h1 {
-            text-shadow: 0 0 10px #00c6ff, 0 0 20px #0072ff;
-        }
-    </style>
-""", unsafe_allow_html=True)
+st.markdown("""
+    <h3 style='color:#FFD700;'>🔥 Your Hydration Streaks</h3>
+    <div style='display:flex; justify-content:space-between; align-items:center; margin-top:10px;'>
+        <div style='text-align:center;'>
+            <p style='color:white; font-size:22px; font-weight:bold;'>Current Streak</p>
+            <h1 style='color:white; font-size:42px; margin-top:-10px;'>💧 {current_streak} days</h1>
+        </div>
+        <div style='text-align:center;'>
+            <p style='color:white; font-size:22px; font-weight:bold;'>Longest Streak</p>
+            <h1 style='color:white; font-size:42px; margin-top:-10px;'>🏆 {longest_streak} days</h1>
+        </div>
+    </div>
+""".format(current_streak=user["streak"], longest_streak=user["longest_streak"]), unsafe_allow_html=True)
+
 
 
     st.markdown("<h2 style='color:#FFD166;'>🏅 Your Badges & Streaks</h2>", unsafe_allow_html=True)
