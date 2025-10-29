@@ -249,11 +249,13 @@ elif st.session_state.page == "Challenges":
             )
 
 # ---------- BADGES ----------
+# ---------- BADGES ----------
 elif st.session_state.page == "Badges":
     navbar()
     
-    # 🔧 Fix: Ensure users data is loaded
-    users = load_users()
+    # ✅ Fix: Load data and users correctly
+    data = load_data()
+    users = data["users"]
     user = ensure_user(st.session_state.user)
 
     st.header("🏅 Your Badges")
@@ -268,29 +270,32 @@ elif st.session_state.page == "Badges":
     badges_earned = []
 
     # --- Badge conditions ---
-    # 1. First Sip
-    if len(user["drinks"]) >= 1 and "💧 First Sip!" not in user["badges"]:
+    # 1️⃣ First Sip
+    total_drinks = sum(len(day.get("entries", [])) for day in user["history"].values())
+    if total_drinks >= 1 and "💧 First Sip!" not in user["badges"]:
         user["badges"].append("💧 First Sip!")
         badges_earned.append("WOWW! You’ve got your first sip — great start!")
 
-    # 2. 1 Week and 1 Month badges
-    if "start_date" in user:
-        from datetime import datetime
-        try:
-            start_date = datetime.strptime(user["start_date"], "%Y-%m-%d")
-            days_since = (datetime.now() - start_date).days
-            if days_since >= 7 and "🌈 Hydration Hero (1 Week)" not in user["badges"]:
-                user["badges"].append("🌈 Hydration Hero (1 Week)")
-                badges_earned.append("You've completed your first week — you’re a Hydration Hero! 💪")
-            if days_since >= 30 and "🏆 Aqua Master (1 Month)" not in user["badges"]:
-                user["badges"].append("🏆 Aqua Master (1 Month)")
-                badges_earned.append("One month strong! You’ve earned the Aqua Master badge! 🌊")
-        except Exception:
-            pass
+    # 2️⃣ 1 Week and 1 Month badges
+    if "start_date" not in user:
+        user["start_date"] = list(user["history"].keys())[0] if user["history"] else today_str()
 
-    # 3. Completed challenge badges
+    from datetime import datetime
+    try:
+        start_date = datetime.strptime(user["start_date"], "%Y-%m-%d")
+        days_since = (datetime.now() - start_date).days
+        if days_since >= 7 and "🌈 Hydration Hero (1 Week)" not in user["badges"]:
+            user["badges"].append("🌈 Hydration Hero (1 Week)")
+            badges_earned.append("You've completed your first week — you’re a Hydration Hero! 💪")
+        if days_since >= 30 and "🏆 Aqua Master (1 Month)" not in user["badges"]:
+            user["badges"].append("🏆 Aqua Master (1 Month)")
+            badges_earned.append("One month strong! You’ve earned the Aqua Master badge! 🌊")
+    except Exception:
+        pass
+
+    # 3️⃣ Completed challenge badges
     for ch in user["challenges"]:
-        if ch.get("completed") and f"✅ Completed: {ch['name']}" not in user["badges"]:
+        if ch.get("done") and f"✅ Completed: {ch['name']}" not in user["badges"]:
             user["badges"].append(f"✅ Completed: {ch['name']}")
             badges_earned.append(f"Your challenge **{ch['name']}** was successfully completed! 🎉")
 
@@ -309,9 +314,7 @@ elif st.session_state.page == "Badges":
 
     # ✅ Save user safely
     users[st.session_state.user] = user
-    save_users(users)
-
-
+    save_data(data)
 
 # ---------- SETTINGS ----------
 elif st.session_state.page == "Settings":
@@ -354,5 +357,6 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
