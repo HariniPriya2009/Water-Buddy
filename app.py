@@ -112,7 +112,21 @@ if st.session_state.page == "Login":
     password = st.text_input("Password:", type="password")
 
     if mode == "Sign Up":
-        age = st.radio("Select your age group:", ["<18", "18–30", "31–50", "50+"], horizontal=True)
+        # Age selector with plus and minus buttons
+        st.write("### Select your age:")
+        if "age" not in st.session_state:
+            st.session_state.age = 18  # Default age
+        
+        col1, col2, col3 = st.columns([1, 1, 1])
+        with col1:
+            if st.button("➖", key="minus_age") and st.session_state.age > 15:
+                st.session_state.age -= 1
+        with col2:
+            st.markdown(f"<h3 style='text-align:center;color:white;'>{st.session_state.age}</h3>", unsafe_allow_html=True)
+        with col3:
+            if st.button("➕", key="plus_age") and st.session_state.age < 90:
+                st.session_state.age += 1
+
         if st.button("Create Account 🚀"):
             if not name.strip() or not password.strip():
                 st.warning("Please enter both username and password!")
@@ -121,7 +135,7 @@ if st.session_state.page == "Login":
             else:
                 st.session_state.user = name.strip()
                 user = ensure_user(st.session_state.user, password)
-                user["profile"]["age_group"] = age
+                user["profile"]["age"] = st.session_state.age
                 save_data(data)
                 st.success(f"Welcome {name}! Your account has been created 🎉")
                 st.session_state.page = "Dashboard"
@@ -138,7 +152,6 @@ if st.session_state.page == "Login":
                 st.success(f"Welcome back, {name}! 💧")
                 st.session_state.page = "Dashboard"
                 st.rerun()
-
 
 # ---------- DASHBOARD ----------
 elif st.session_state.page == "Dashboard":
@@ -467,5 +480,6 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
