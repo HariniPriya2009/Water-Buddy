@@ -251,10 +251,13 @@ elif st.session_state.page == "Challenges":
 # ---------- BADGES ----------
 elif st.session_state.page == "Badges":
     navbar()
+    
+    # 🔧 Fix: Ensure users data is loaded
+    users = load_users()
     user = ensure_user(st.session_state.user)
+
     st.header("🏅 Your Badges")
 
-    # Ensure keys exist
     if "badges" not in user:
         user["badges"] = []
     if "drinks" not in user:
@@ -265,15 +268,15 @@ elif st.session_state.page == "Badges":
     badges_earned = []
 
     # --- Badge conditions ---
-    # 1. First Sip Badge
+    # 1. First Sip
     if len(user["drinks"]) >= 1 and "💧 First Sip!" not in user["badges"]:
         user["badges"].append("💧 First Sip!")
         badges_earned.append("WOWW! You’ve got your first sip — great start!")
 
-    # 2. 1 Week Badge
+    # 2. 1 Week and 1 Month badges
     if "start_date" in user:
+        from datetime import datetime
         try:
-            from datetime import datetime
             start_date = datetime.strptime(user["start_date"], "%Y-%m-%d")
             days_since = (datetime.now() - start_date).days
             if days_since >= 7 and "🌈 Hydration Hero (1 Week)" not in user["badges"]:
@@ -285,29 +288,29 @@ elif st.session_state.page == "Badges":
         except Exception:
             pass
 
-    # 3. Completed Challenge Badge
+    # 3. Completed challenge badges
     for ch in user["challenges"]:
         if ch.get("completed") and f"✅ Completed: {ch['name']}" not in user["badges"]:
             user["badges"].append(f"✅ Completed: {ch['name']}")
             badges_earned.append(f"Your challenge **{ch['name']}** was successfully completed! 🎉")
 
-    # --- Display badges and messages ---
+    # --- Display badges ---
     if not user["badges"]:
         st.info("No badges yet — keep hydrating to earn them!")
     else:
         for b in user["badges"]:
             st.success(f"🏆 {b}")
 
-    # --- New messages for badges earned this session ---
     if badges_earned:
         st.markdown("### 🎉 New Achievements!")
         for msg in badges_earned:
             st.balloons()
             st.success(msg)
 
-    # Save updated data
+    # ✅ Save user safely
     users[st.session_state.user] = user
     save_users(users)
+
 
 
 # ---------- SETTINGS ----------
@@ -351,4 +354,5 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
