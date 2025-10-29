@@ -256,44 +256,17 @@ elif st.session_state.page == "Badges":
     users = data["users"]
     user = ensure_user(st.session_state.user)
 
-    st.markdown("""
-        <style>
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Poppins', sans-serif !important;
+ st.markdown("""
+    <style>
+        h1, h3, p {
+            font-family: 'Poppins', sans-serif;
         }
-        .stMetric label {
-            font-size: 1.1rem !important;
-            color: #00B4D8 !important;
+        h1 {
+            text-shadow: 0 0 10px #00c6ff, 0 0 20px #0072ff;
         }
-        .stMetric div[data-testid="stMetricValue"] {
-            font-size: 2rem !important;
-            color: #48CAE4 !important;
-            font-weight: 600;
-        }
-        .stProgress > div > div {
-            background: linear-gradient(90deg, #00B4D8, #48CAE4, #90E0EF);
-        }
-        .badge-box {
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 15px;
-            padding: 15px;
-            margin-top: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-        .badge-title {
-            font-size: 1.4rem;
-            color: #FFD166;
-            font-weight: 700;
-        }
-        .badge-text {
-            color: #FFFFFFCC;
-            font-size: 1.1rem;
-        }
-        .stMarkdown {
-            font-family: 'Poppins', sans-serif !important;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    </style>
+""", unsafe_allow_html=True)
+
 
     st.markdown("<h2 style='color:#FFD166;'>🏅 Your Badges & Streaks</h2>", unsafe_allow_html=True)
     st.markdown("<h3 style='color:#F07167;'>🔥 Your Hydration Streaks</h3>", unsafe_allow_html=True)
@@ -435,6 +408,7 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
