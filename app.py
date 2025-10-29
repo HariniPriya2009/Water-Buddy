@@ -276,27 +276,27 @@ st.markdown("<h2 style='color:#FFD166;'>🏅 Your Badges & Streaks</h2>", unsafe
 st.markdown("<h3 style='color:#F07167;'>🔥 Your Hydration Streaks</h3>", unsafe_allow_html=True)
 
     # --- streak calculation ---
-    from datetime import datetime, timedelta
-    today = datetime.now().date()
+from datetime import datetime, timedelta
+today = datetime.now().date()
 
-    if user["history"]:
-        sorted_days = sorted(user["history"].keys())
-        streak = 1
-        longest_streak = 1
-        prev_date = datetime.strptime(sorted_days[0], "%Y-%m-%d").date()
+   if user["history"]:
+       sorted_days = sorted(user["history"].keys())
+       streak = 1
+       longest_streak = 1
+       prev_date = datetime.strptime(sorted_days[0], "%Y-%m-%d").date()
 
-        for d in sorted_days[1:]:
-            curr_date = datetime.strptime(d, "%Y-%m-%d").date()
-            if (curr_date - prev_date).days == 1:
-                streak += 1
-                longest_streak = max(longest_streak, streak)
-            else:
-                streak = 1
-            prev_date = curr_date
+       for d in sorted_days[1:]:
+           curr_date = datetime.strptime(d, "%Y-%m-%d").date()
+           if (curr_date - prev_date).days == 1:
+               streak += 1
+               longest_streak = max(longest_streak, streak)
+           else:
+               streak = 1
+           prev_date = curr_date
 
-        last_date = datetime.strptime(sorted_days[-1], "%Y-%m-%d").date()
-        if (today - last_date).days >= 2:
-            streak = 0
+       last_date = datetime.strptime(sorted_days[-1], "%Y-%m-%d").date()
+       if (today - last_date).days >= 2:
+           streak = 0
     else:
         streak = 0
         longest_streak = 0
@@ -412,6 +412,7 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
