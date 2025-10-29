@@ -368,46 +368,45 @@ elif st.session_state.page == "Badges":
     users[st.session_state.user] = user
     save_data(data)
 
-# ---------- SETTINGS ----------
 # ---------- SETTINGS PAGE ----------
-elif page == "Settings":
+elif st.session_state.page == "Settings":
     navbar()
     st.markdown("<h2 style='color:#FFD166;'>⚙️ Settings</h2>", unsafe_allow_html=True)
 
-    users = load_users()
     user = ensure_user(st.session_state.user)
 
     # --- User Info Section ---
     st.subheader("👤 User Information")
-    st.write(f"**Username:** {user['name']}")
-    st.write(f"**Email:** {user.get('email', 'Not provided')}")
+    st.write(f"**Username:** {user['profile']['name']}")
+    st.write(f"**Age Group:** {user['profile'].get('age_group', 'Not provided')}")
     st.write(f"**Daily Goal:** {user.get('goal', 2)} L")
 
     # Option to update daily goal
-    new_goal = st.number_input("Update your daily water goal (litres):", min_value=0.5, max_value=10.0, value=user.get('goal', 2.0), step=0.1)
-    if new_goal != user.get('goal'):
-        user['goal'] = new_goal
-        users[st.session_state.user] = user
-        save_users(users)
+    new_goal = st.number_input(
+        "Update your daily water goal (litres):",
+        min_value=0.5,
+        max_value=10.0,
+        value=user.get("goal", 2.0),
+        step=0.1
+    )
+    if st.button("💾 Update Goal"):
+        user["goal"] = new_goal
+        save_data(data)
         st.success("✅ Goal updated successfully!")
 
     st.markdown("---")
 
-    # --- Logout Button ---
-    if st.button("🚪 Logout"):
-        st.session_state.user = None
-        st.session_state.page = "Home"
-        st.experimental_rerun()
-
-
+    # --- Reminder Settings ---
     st.subheader("🔔 Reminder Settings")
     rem_enabled = st.checkbox(
         "Enable in-app reminders (works while app is open)",
         value=user["settings"].get("reminder_enabled", False)
     )
     rem_minutes = st.number_input(
-        "Reminder interval (minutes):", min_value=15, max_value=720,
-        value=user["settings"].get("reminder_minutes", 120), step=15
+        "Reminder interval (minutes):",
+        min_value=15, max_value=720,
+        value=user["settings"].get("reminder_minutes", 120),
+        step=15
     )
     rem_start = st.time_input(
         "Start reminders at:",
@@ -422,26 +421,31 @@ elif page == "Settings":
         st.success("Reminder settings saved!")
 
     st.markdown("---")
-    st.subheader("🗑️ Reset All Data")
-    st.warning("This will delete all your logs, badges, and progress.")
-    confirm = st.checkbox("I confirm I want to delete all my data.")
-    if confirm and st.button("Reset All Data"):
-        data["users"].pop(st.session_state.user, None)
-        save_data(data)
+
+    # --- Logout Button ---
+    st.subheader("🚪 Logout")
+    if st.button("Logout"):
         st.session_state.user = None
         st.session_state.page = "Login"
-        st.success("All data deleted. You are now logged out.")
+        st.success("Logged out successfully!")
         st.rerun()
+
+    st.markdown("---")
+
+    # --- Reset All Data ---
+    st.subheader("🗑️ Reset All Data")
+    st.warning("This will permanently delete all your logs, badges, and progress.")
+    confirm = st.checkbox("I confirm I want to delete all my data.")
+    if st.button("❌ Delete All Data"):
+        if confirm:
+            del data["users"][st.session_state.user]
+            save_data(data)
+            st.session_state.user = None
+            st.session_state.page = "Login"
+            st.success("All your data has been deleted.")
+            st.rerun()
+        else:
+            st.warning("Please confirm before deleting your data.")
 
 # ---------- SAVE ----------
 save_data(data)
-
-
-
-
-
-
-
-
-
-
