@@ -256,59 +256,56 @@ elif st.session_state.page == "Badges":
     users = data["users"]
     user = ensure_user(st.session_state.user)
 
-st.markdown("""
-    <h3 style='color:#FFD700;'>🔥 Your Hydration Streaks</h3>
-    <div style='display:flex; justify-content:space-between; align-items:center; margin-top:10px;'>
-        <div style='text-align:center;'>
-            <p style='color:white; font-size:22px; font-weight:bold;'>Current Streak</p>
-            <h1 style='color:white; font-size:42px; margin-top:-10px;'>💧 {current_streak} days</h1>
-        </div>
-        <div style='text-align:center;'>
-            <p style='color:white; font-size:22px; font-weight:bold;'>Longest Streak</p>
-            <h1 style='color:white; font-size:42px; margin-top:-10px;'>🏆 {longest_streak} days</h1>
-        </div>
-    </div>
-""".format(current_streak=user["streak"], longest_streak=user["longest_streak"]), unsafe_allow_html=True)
-
-
-
-st.markdown("<h2 style='color:#FFD166;'>🏅 Your Badges & Streaks</h2>", unsafe_allow_html=True)
-st.markdown("<h3 style='color:#F07167;'>🔥 Your Hydration Streaks</h3>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#FFD166;'>🏅 Your Badges & Streaks</h2>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#F07167;'>🔥 Your Hydration Streaks</h3>", unsafe_allow_html=True)
 
     # --- streak calculation ---
-from datetime import datetime, timedelta
-today = datetime.now().date()
+    from datetime import datetime, timedelta
+    today = datetime.now().date()
 
-   if user["history"]:
-       sorted_days = sorted(user["history"].keys())
-       streak = 1
-       longest_streak = 1
-       prev_date = datetime.strptime(sorted_days[0], "%Y-%m-%d").date()
+    if user["history"]:
+        sorted_days = sorted(user["history"].keys())
+        streak = 1
+        longest_streak = 1
+        prev_date = datetime.strptime(sorted_days[0], "%Y-%m-%d").date()
 
-       for d in sorted_days[1:]:
-           curr_date = datetime.strptime(d, "%Y-%m-%d").date()
-           if (curr_date - prev_date).days == 1:
-               streak += 1
-               longest_streak = max(longest_streak, streak)
-           else:
-               streak = 1
-           prev_date = curr_date
+        for d in sorted_days[1:]:
+            curr_date = datetime.strptime(d, "%Y-%m-%d").date()
+            if (curr_date - prev_date).days == 1:
+                streak += 1
+                longest_streak = max(longest_streak, streak)
+            else:
+                streak = 1
+            prev_date = curr_date
 
-       last_date = datetime.strptime(sorted_days[-1], "%Y-%m-%d").date()
-       if (today - last_date).days >= 2:
-           streak = 0
+        last_date = datetime.strptime(sorted_days[-1], "%Y-%m-%d").date()
+        if (today - last_date).days >= 2:
+            streak = 0
     else:
         streak = 0
         longest_streak = 0
 
-    col1, col2 = st.columns(2)
-    col1.metric("Current Streak", f"{streak} days 💧")
-    col2.metric("Longest Streak", f"{longest_streak} days 🏆")
+    # --- display streaks with white text ---
+    st.markdown(f"""
+        <div style='display:flex; justify-content:space-between; align-items:center; margin-top:10px;'>
+            <div style='text-align:center;'>
+                <p style='color:white; font-size:22px; font-weight:bold;'>Current Streak</p>
+                <h1 style='color:white; font-size:42px; margin-top:-10px;'>💧 {streak} days</h1>
+            </div>
+            <div style='text-align:center;'>
+                <p style='color:white; font-size:22px; font-weight:bold;'>Longest Streak</p>
+                <h1 style='color:white; font-size:42px; margin-top:-10px;'>🏆 {longest_streak} days</h1>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
 
     next_goal = 7 if streak < 7 else (30 if streak < 30 else 60)
     progress = min(streak / next_goal, 1.0)
     st.progress(progress)
-    st.markdown(f"<p style='color:#ADE8F4;font-size:1.1rem;'>{streak}/{next_goal} days toward your next milestone!</p>", unsafe_allow_html=True)
+    st.markdown(
+        f"<p style='color:#ADE8F4;font-size:1.1rem;'>{streak}/{next_goal} days toward your next milestone!</p>",
+        unsafe_allow_html=True
+    )
 
     # --- motivational messages ---
     if streak == 0:
@@ -412,6 +409,7 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
