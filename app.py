@@ -85,10 +85,10 @@ def navbar():
     st.markdown("---")
 
 # ---------- USER MANAGEMENT ----------
-def ensure_user(name, password):
+def ensure_user(name, password=None):
     if name not in data["users"]:
         data["users"][name] = {
-            "profile": {"name": name, "password": password, "age_group": None},
+            "profile": {"name": name, "password": password or "", "age_group": None},
             "history": {},
             "badges": [],
             "challenges": [],
@@ -113,8 +113,6 @@ if st.session_state.page == "Login":
     if st.button("Start 🚀"):
         if not name.strip() or not password.strip():
             st.warning("Please enter both name and password!")
-        elif any(u["profile"]["password"] == password for u in data["users"].values()):
-            st.error("Password already in use! Choose a different one.")
         else:
             st.session_state.user = name.strip()
             user = ensure_user(st.session_state.user, password)
@@ -127,7 +125,7 @@ if st.session_state.page == "Login":
 # ---------- DASHBOARD ----------
 elif st.session_state.page == "Dashboard":
     navbar()
-    user = data["users"][st.session_state.user]
+    user = ensure_user(st.session_state.user)
     st.header(f"📊 Dashboard — {user['profile']['name']}")
 
     # Past 7 days graph
@@ -149,10 +147,24 @@ elif st.session_state.page == "Dashboard":
     st.metric("Today's Intake", f"{today_total/1000:.2f} L")
     st.progress(min(1, today_total / 2000))
 
+    # ---------- RESET TODAY’S PROGRESS ----------
+    st.markdown("---")
+    st.subheader("🔁 Reset Today's Progress")
+    st.info("You can clear only today's water intake if you made a mistake or want to start fresh.")
+    if st.button("Reset Today’s Progress"):
+        today = today_str()
+        if today in user["history"]:
+            user["history"][today] = {"total_ml": 0, "entries": []}
+            save_data(data)
+            st.success("✅ Today's progress has been reset!")
+            st.rerun()
+        else:
+            st.warning("No data found for today to reset.")
+
 # ---------- LOG WATER ----------
 elif st.session_state.page == "Log Water":
     navbar()
-    user = data["users"][st.session_state.user]
+    user = ensure_user(st.session_state.user)
     st.header(" Log Water Intake")
 
     col1, col2, col3, col4 = st.columns(4)
@@ -173,7 +185,6 @@ elif st.session_state.page == "Log Water":
         user["history"][ds]["entries"].append({"time": tnow, "ml": int(amt)})
         user["history"][ds]["total_ml"] += int(amt)
         save_data(data)
-        st.session_state.gif_state = "updated"
         st.success(f"Added {amt} ml! 💧")
         st.rerun()
 
@@ -199,6 +210,8 @@ elif st.session_state.page == "Log Water":
 
     st.progress(min(progress, 1.0))
     st.write(f"**Today's Intake:** {today_total} ml / 2000 ml")
+
+# ---------- CHALLENGES ----------
 elif st.session_state.page == "Challenges":
     navbar()
     user = ensure_user(st.session_state.user)
@@ -225,7 +238,7 @@ elif st.session_state.page == "Challenges":
         st.success("Challenge created!")
         st.rerun()
 
-if user["challenges"]:
+    if user["challenges"]:
         st.subheader("Your Challenges")
         for ch in user["challenges"]:
             st.write(
@@ -235,8 +248,55 @@ if user["challenges"]:
                 f"Started {ch.get('start', '?')}"
             )
 
+# ---------- BADGES ----------
+elif st.session_state.page == "Badges":
+    navbar()
+    user = ensure_user(st.session_state.user)
+    st.header("🏅 Your Badges")
+    if not user["badges"]:
+        st.info("No badges yet — keep hydrating to earn them!")
+    else:
+        for b in user["badges"]:
+            st.success(f"🏆 {b}")
+
+# ---------- SETTINGS ----------
+elif st.session_state.page == "Settings":
+    navbar()
+    user = ensure_user(st.session_state.user)
+    st.header("⚙️ Settings")
+
+    st.subheader("🔔 Reminder Settings")
+    rem_enabled = st.checkbox(
+        "Enable in-app reminders (works while app is open)",
+        value=user["settings"].get("reminder_enabled", False)
+    )
+    rem_minutes = st.number_input(
+        "Reminder interval (minutes):", min_value=15, max_value=720,
+        value=user["settings"].get("reminder_minutes", 120), step=15
+    )
+    rem_start = st.time_input(
+        "Start reminders at:",
+        value=time.fromisoformat(user["settings"].get("reminder_start_time", "09:00"))
+    )
+
+    if st.button("💾 Save Reminder Settings"):
+        user["settings"]["reminder_enabled"] = rem_enabled
+        user["settings"]["reminder_minutes"] = int(rem_minutes)
+        user["settings"]["reminder_start_time"] = rem_start.strftime("%H:%M")
+        save_data(data)
+        st.success("Reminder settings saved!")
+
+    st.markdown("---")
+    st.subheader("🗑️ Reset All Data")
+    st.warning("This will delete all your logs, badges, and progress.")
+    confirm = st.checkbox("I confirm I want to delete all my data.")
+    if confirm and st.button("Reset All Data"):
+        data["users"].pop(st.session_state.user, None)
+        save_data(data)
+        st.session_state.user = None
+        st.session_state.page = "Login"
+        st.success("All data deleted. You are now logged out.")
+        st.rerun()
 
 # ---------- SAVE ----------
 save_data(data)
-
-
