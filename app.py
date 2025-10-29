@@ -225,7 +225,7 @@ elif st.session_state.page == "Challenges":
         st.success("Challenge created!")
         st.rerun()
 
- if user["challenges"]:
+if user["challenges"]:
         st.subheader("Your Challenges")
         for ch in user["challenges"]:
             st.write(
@@ -238,4 +238,5 @@ elif st.session_state.page == "Challenges":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
