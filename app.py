@@ -153,7 +153,7 @@ elif st.session_state.page == "Dashboard":
 elif st.session_state.page == "Log Water":
     navbar()
     user = data["users"][st.session_state.user]
-    st.header("💦 Log Water Intake")
+    st.header(" Log Water Intake")
 
     col1, col2, col3, col4 = st.columns(4)
     amount = None
@@ -162,7 +162,7 @@ elif st.session_state.page == "Log Water":
     if col3.button("300 ml"): amount = 300
     if col4.button("500 ml"): amount = 500
 
-    custom = st.number_input("Custom amount (ml):", 100, 1000, 250, 50)
+    custom = st.number_input("Custom amount (ml):", 100, 1000, 250, 500)
     
     if st.button("Add Drink 💧"):
         amt = amount or custom
@@ -199,9 +199,44 @@ elif st.session_state.page == "Log Water":
 
     st.progress(min(progress, 1.0))
     st.write(f"**Today's Intake:** {today_total} ml / 2000 ml")
+elif st.session_state.page == "Challenges":
+    navbar()
+    user = ensure_user(st.session_state.user)
+    st.header("🏁 Challenges")
+
+    # Cleanup old challenges without 'goal'
+    for ch in user["challenges"]:
+        if "goal" not in ch:
+            ch["goal"] = 2.0
+    save_data(data)
+
+    ch_name = st.text_input("Challenge name:")
+    days = st.slider("Duration (days)", 1, 30, 7)
+    daily_goal = st.slider("Daily goal (litres)", 0.5, 5.0, 2.0, 0.25)
+    if st.button("Create Challenge"):
+        user["challenges"].append({
+            "name": ch_name or f"{daily_goal}L × {days}d",
+            "days": days,
+            "goal": daily_goal,
+            "start": today_str(),
+            "done": False
+        })
+        save_data(data)
+        st.success("Challenge created!")
+        st.rerun()
+
+    if user["challenges"]:
+        st.subheader("Your Challenges")
+        for ch in user["challenges"]:
+            st.write(
+                f"**{ch.get('name', 'Unnamed Challenge')}** — "
+                f"{ch.get('days', '?')} days, "
+                f"{ch.get('goal', '?')} L/day — "
+                f"Started {ch.get('start', '?')}"
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
