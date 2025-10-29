@@ -225,33 +225,20 @@ elif st.session_state.page == "Challenges":
         st.success("Challenge created!")
         st.rerun()
 
-   if user["challenges"]:
-    st.subheader("Your Challenges")
-    for ch in user["challenges"]:
-        name = ch.get("name", "Unnamed Challenge")
-        days = ch.get("days", "?")
-        goal = ch.get("goal", "?")
-        start = ch.get("start", "?")
-
-        st.markdown(
-            f"""
-            <div style='background-color:#1e88e5;
-                        padding:10px;
-                        border-radius:10px;
-                        color:white;
-                        margin-bottom:8px'>
-                <b>{name}</b> — {days} days, {goal} L/day  
-                <small>Started: {start}</small>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-else:
-    st.info("No challenges yet — create one to get started!")
+if user["challenges"]:
+        st.subheader("Your Challenges")
+        for ch in user["challenges"]:
+            st.write(
+                f"**{ch.get('name', 'Unnamed Challenge')}** — "
+                f"{ch.get('days', '?')} days, "
+                f"{ch.get('goal', '?')} L/day — "
+                f"Started {ch.get('start', '?')}"
+            )
 
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
