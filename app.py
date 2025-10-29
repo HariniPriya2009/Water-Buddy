@@ -369,10 +369,36 @@ elif st.session_state.page == "Badges":
     save_data(data)
 
 # ---------- SETTINGS ----------
-elif st.session_state.page == "Settings":
+# ---------- SETTINGS PAGE ----------
+elif page == "Settings":
     navbar()
+    st.markdown("<h2 style='color:#FFD166;'>⚙️ Settings</h2>", unsafe_allow_html=True)
+
+    users = load_users()
     user = ensure_user(st.session_state.user)
-    st.header("⚙️ Settings")
+
+    # --- User Info Section ---
+    st.subheader("👤 User Information")
+    st.write(f"**Username:** {user['name']}")
+    st.write(f"**Email:** {user.get('email', 'Not provided')}")
+    st.write(f"**Daily Goal:** {user.get('goal', 2)} L")
+
+    # Option to update daily goal
+    new_goal = st.number_input("Update your daily water goal (litres):", min_value=0.5, max_value=10.0, value=user.get('goal', 2.0), step=0.1)
+    if new_goal != user.get('goal'):
+        user['goal'] = new_goal
+        users[st.session_state.user] = user
+        save_users(users)
+        st.success("✅ Goal updated successfully!")
+
+    st.markdown("---")
+
+    # --- Logout Button ---
+    if st.button("🚪 Logout"):
+        st.session_state.user = None
+        st.session_state.page = "Home"
+        st.experimental_rerun()
+
 
     st.subheader("🔔 Reminder Settings")
     rem_enabled = st.checkbox(
@@ -409,6 +435,7 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
