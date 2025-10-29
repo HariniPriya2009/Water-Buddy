@@ -106,21 +106,39 @@ if st.session_state.page == "Login":
     st.subheader("💧 Hydrate Your Lifestyle with Smart Tracking")
     st.markdown("---")
 
-    name = st.text_input("Enter your name:")
-    password = st.text_input("Set a password:", type="password")
-    age = st.radio("Select your age group:", ["<18", "18–30", "31–50", "50+"], horizontal=True)
+    mode = st.radio("Select mode:", ["Login", "Sign Up"], horizontal=True)
 
-    if st.button("Start 🚀"):
-        if not name.strip() or not password.strip():
-            st.warning("Please enter both name and password!")
-        else:
-            st.session_state.user = name.strip()
-            user = ensure_user(st.session_state.user, password)
-            user["profile"]["age_group"] = age
-            save_data(data)
-            st.session_state.page = "Dashboard"
-            st.success(f"Welcome {name}! You're all set 🎉")
-            st.rerun()
+    name = st.text_input("Username:")
+    password = st.text_input("Password:", type="password")
+
+    if mode == "Sign Up":
+        age = st.radio("Select your age group:", ["<18", "18–30", "31–50", "50+"], horizontal=True)
+        if st.button("Create Account 🚀"):
+            if not name.strip() or not password.strip():
+                st.warning("Please enter both username and password!")
+            elif name in data["users"]:
+                st.error("Username already exists! Try logging in instead.")
+            else:
+                st.session_state.user = name.strip()
+                user = ensure_user(st.session_state.user, password)
+                user["profile"]["age_group"] = age
+                save_data(data)
+                st.success(f"Welcome {name}! Your account has been created 🎉")
+                st.session_state.page = "Dashboard"
+                st.rerun()
+
+    else:  # Login mode
+        if st.button("Login 🔑"):
+            if name not in data["users"]:
+                st.error("User not found! Please sign up first.")
+            elif data["users"][name]["profile"]["password"] != password:
+                st.error("Incorrect password! Please try again.")
+            else:
+                st.session_state.user = name
+                st.success(f"Welcome back, {name}! 💧")
+                st.session_state.page = "Dashboard"
+                st.rerun()
+
 
 # ---------- DASHBOARD ----------
 elif st.session_state.page == "Dashboard":
@@ -449,4 +467,5 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
