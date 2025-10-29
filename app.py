@@ -272,8 +272,8 @@ st.markdown("""
 
 
 
-    st.markdown("<h2 style='color:#FFD166;'>🏅 Your Badges & Streaks</h2>", unsafe_allow_html=True)
-    st.markdown("<h3 style='color:#F07167;'>🔥 Your Hydration Streaks</h3>", unsafe_allow_html=True)
+st.markdown("<h2 style='color:#FFD166;'>🏅 Your Badges & Streaks</h2>", unsafe_allow_html=True)
+st.markdown("<h3 style='color:#F07167;'>🔥 Your Hydration Streaks</h3>", unsafe_allow_html=True)
 
     # --- streak calculation ---
     from datetime import datetime, timedelta
@@ -412,6 +412,7 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
