@@ -425,15 +425,21 @@ elif st.session_state.page == "Settings":
     navbar()
     st.markdown("<h2 style='color:#FFD166;'>⚙️ Settings</h2>", unsafe_allow_html=True)
 
+    # Ensure the user exists in data
     user = ensure_user(st.session_state.user)
+    profile = user.get("profile", {})
+
+    # 🧠 Ensure age group field exists
+    if "age_group" not in profile:
+        profile["age_group"] = "Not set"
 
     # --- User Info Section ---
     st.subheader("👤 User Information")
-    st.write(f"**Username:** {user['profile']['name']}")
-    st.write(f"**Age Group:** {user['profile'].get('age_group', 'Not provided')}")
-    st.write(f"**Daily Goal:** {user.get('goal', 2)} L")
+    st.markdown(f"**Username:** {profile.get('name', st.session_state.user)}")
+    st.markdown(f"**Age Group:** {profile.get('age_group', 'Not provided')}")
+    st.markdown(f"**Daily Goal:** {user.get('goal', 2)} L")
 
-    # Option to update daily goal
+    # --- Update Goal Section ---
     new_goal = st.number_input(
         "Update your daily water goal (litres):",
         min_value=0.5,
@@ -474,7 +480,7 @@ elif st.session_state.page == "Settings":
 
     st.markdown("---")
 
-    # --- Logout Button ---
+    # --- Logout Section ---
     st.subheader("🚪 Logout")
     if st.button("Logout"):
         st.session_state.user = None
@@ -501,6 +507,7 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
