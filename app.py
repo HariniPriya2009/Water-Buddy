@@ -3,6 +3,7 @@ import pandas as pd
 import altair as alt
 import json
 import os
+import random
 from datetime import datetime, timedelta, date, time
 
 # ---------- CONFIG ----------
@@ -71,6 +72,22 @@ if "page" not in st.session_state:
     st.session_state.page = "Login"
 if "user" not in st.session_state:
     st.session_state.user = None
+
+# ---------- FUN FACTS ----------
+fun_facts = [
+    "💧 Do you know? Drinking water can boost your mood and energy levels instantly!",
+    "🌿 Fun fact: Your brain is around 75% water — stay hydrated to stay sharp!",
+    "🚰 You lose about 1 litre of water every day just by breathing and sweating.",
+    "🧊 Cold water can slightly increase your metabolism as your body warms it up!",
+    "💦 Drinking enough water can improve your skin’s glow naturally.",
+    "🥤 Sometimes thirst feels like hunger — drinking water first can prevent overeating.",
+    "🏃‍♀️ Proper hydration helps your muscles work more efficiently during workouts.",
+    "🕐 Even mild dehydration (1-2%) can reduce your focus and concentration levels.",
+    "🌊 Water helps regulate body temperature and flush out toxins.",
+    "🍉 Hydrating foods like watermelon, cucumber, and oranges help boost your intake!"
+]
+
+
 
 # ---------- NAVBAR ----------
 def navbar():
@@ -158,6 +175,10 @@ elif st.session_state.page == "Dashboard":
     navbar()
     user = ensure_user(st.session_state.user)
     st.header(f"📊 Dashboard — {user['profile']['name']}")
+    
+        # --- Hydration Fact of the Day ---
+    st.markdown("### 💡 Do You Know?")
+    st.info(random.choice(fun_facts))
 
     # Past 7 days graph
     dates, totals = [], []
@@ -480,6 +501,7 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
