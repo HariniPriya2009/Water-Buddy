@@ -740,9 +740,9 @@ elif st.session_state.page == "Settings":
     # --- Reset All Data ---
     st.subheader("🗑️ Reset All Data")
     st.warning("This will permanently delete all your logs, badges, and progress.")
-    confirm = st.checkbox("I confirm I want to delete all my data.")
+   RC = st.checkbox("I confirm I want to delete all my data.")
     if st.button("❌ Delete All Data"):
-        if confirm:
+        if RC:
             del data["users"][st.session_state.user]
             save_data(data)
             st.session_state.user = None
@@ -754,6 +754,7 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
