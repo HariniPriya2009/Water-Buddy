@@ -339,7 +339,7 @@ elif st.session_state.page == "Dashboard":
     daily_goal = user.get("daily_goal_ml", 2000)
     progress_percentage = (today_total / daily_goal) * 100
 
-    # FEATURE 3 & 4: Real-time visual feedback with motivational message
+
     st.markdown(f"### {get_motivational_message(progress_percentage)}")
     
     # Animated water bottle visualization (FEATURE 3)
@@ -384,6 +384,11 @@ elif st.session_state.page == "Dashboard":
     col1, col2, col3 = st.columns(3)
     with col1:
         st.metric("Current Intake", f"{today_total/1000:.2f} L", delta=f"{(today_total - daily_goal)/1000:.2f} L")
+        # Show a soft reminder every time user refreshes or opens dashboard
+if datetime.now().minute % 30 == 0:  # every 30 minutes
+    soft_bubble_reminder()
+
+    
     with col2:
         st.metric("Daily Target", f"{daily_goal/1000:.2f} L")
     with col3:
@@ -460,6 +465,33 @@ elif st.session_state.page == "Log Water":
 
     st.markdown("---")
 
+    # ---------- SOFT BUBBLE REMINDER ----------
+def soft_bubble_reminder():
+    st.markdown("""
+    <div style='
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 25px;
+        padding: 20px;
+        margin-top: 20px;
+        text-align: center;
+        color: #ffffff;
+        box-shadow: 0px 4px 15px rgba(0,0,0,0.3);
+        backdrop-filter: blur(10px);
+        animation: floatIn 2s ease-in-out;
+    '>
+        <img src="https://cdn-icons-png.flaticon.com/512/1127/1127674.png" width="80"><br>
+        <h3>💧 Time for a sip!</h3>
+        <p>Stay hydrated, {name} — your body will thank you 💙</p>
+    </div>
+    <style>
+    @keyframes floatIn {
+        0% {opacity: 0; transform: translateY(20px);}
+        100% {opacity: 1; transform: translateY(0);}
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+
     # FEATURE 3: Real-time visual feedback
     st.markdown("### 📊 Today's Progress")
     
@@ -516,6 +548,7 @@ elif st.session_state.page == "Log Water":
             st.text(f"🕒 {entry['time']} — {entry['ml']} ml")
     else:
         st.info("No water logged yet today. Start now!")
+        
 
 # ---------- CHALLENGES ----------
 elif st.session_state.page == "Challenges":
@@ -756,6 +789,7 @@ if st.button("❌ Delete All Data"):
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
