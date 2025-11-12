@@ -468,32 +468,7 @@ elif st.session_state.page == "Log Water":
 
     st.markdown("---")
 
-# ---------- SOFT BUBBLE REMINDER ----------
-def soft_bubble_reminder():
-    st.markdown("""
-    <div style='
-        background: rgba(255, 255, 255, 0.25);
-        border-radius: 25px;
-        padding: 20px;
-        margin-top: 20px;
-        text-align: center;
-        color: #ffffff;
-        box-shadow: 0px 4px 15px rgba(0,0,0,0.3);
-        backdrop-filter: blur(10px);
-        animation: floatIn 2s ease-in-out;
-    '>
-        <img src="https://cdn-icons-png.flaticon.com/512/1127/1127674.png" width="80"><br>
-        <h3>💧 Time for a sip!</h3>
-        <p>Stay hydrated — your body will thank you 💙</p>
-    </div>
-    <style>
-    @keyframes floatIn {
-        0% {opacity: 0; transform: translateY(20px);}
-        100% {opacity: 1; transform: translateY(0);}
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
+
     # FEATURE 3: Real-time visual feedback
     st.markdown("### 📊 Today's Progress")
     
@@ -791,6 +766,7 @@ if st.button("❌ Delete All Data"):
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
