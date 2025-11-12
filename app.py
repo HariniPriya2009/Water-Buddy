@@ -737,23 +737,26 @@ elif st.session_state.page == "Settings":
 
     st.markdown("---")
 
-    # --- Reset All Data ---
-    st.subheader("🗑️ Reset All Data")
-    st.warning("This will permanently delete all your logs, badges, and progress.")
-   RC = st.checkbox("I confirm I want to delete all my data.")
-    if st.button("❌ Delete All Data"):
-        if RC:
-            del data["users"][st.session_state.user]
-            save_data(data)
-            st.session_state.user = None
-            st.session_state.page = "Login"
-            st.success("All your data has been deleted.")
-            st.rerun()
-        else:
-            st.warning("Please confirm before deleting your data.")
+# --- Reset All Data ---
+st.subheader("🗑️ Reset All Data")
+st.warning("This will permanently delete all your logs, badges, and progress.")
+
+RC = st.checkbox("I confirm I want to delete all my data.")
+
+if st.button("❌ Delete All Data"):
+    if RC:
+        del data["users"][st.session_state.user]
+        save_data(data)
+        st.session_state.user = None
+        st.session_state.page = "Login"
+        st.success("All your data has been deleted.")
+        st.rerun()
+    else:
+        st.warning("Please confirm before deleting your data.")
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
