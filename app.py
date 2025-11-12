@@ -384,9 +384,12 @@ elif st.session_state.page == "Dashboard":
     col1, col2, col3 = st.columns(3)
     with col1:
         st.metric("Current Intake", f"{today_total/1000:.2f} L", delta=f"{(today_total - daily_goal)/1000:.2f} L")
-        # Show a soft reminder every time user refreshes or opens dashboard
-if datetime.now().minute % 30 == 0:  # every 30 minutes
-    soft_bubble_reminder()
+  # Soft bubble reminder appears every 30 min
+if user["settings"].get("reminder_enabled", False):
+    current_min = datetime.now().minute
+    if current_min % 30 == 0:
+        soft_bubble_reminder()
+
 
     
     with col2:
@@ -465,11 +468,11 @@ elif st.session_state.page == "Log Water":
 
     st.markdown("---")
 
-    # ---------- SOFT BUBBLE REMINDER ----------
+# ---------- SOFT BUBBLE REMINDER ----------
 def soft_bubble_reminder():
     st.markdown("""
     <div style='
-        background: rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.25);
         border-radius: 25px;
         padding: 20px;
         margin-top: 20px;
@@ -481,7 +484,7 @@ def soft_bubble_reminder():
     '>
         <img src="https://cdn-icons-png.flaticon.com/512/1127/1127674.png" width="80"><br>
         <h3>💧 Time for a sip!</h3>
-        <p>Stay hydrated, {name} — your body will thank you 💙</p>
+        <p>Stay hydrated — your body will thank you 💙</p>
     </div>
     <style>
     @keyframes floatIn {
@@ -490,8 +493,7 @@ def soft_bubble_reminder():
     }
     </style>
     """, unsafe_allow_html=True)
-
-
+    
     # FEATURE 3: Real-time visual feedback
     st.markdown("### 📊 Today's Progress")
     
