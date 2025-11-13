@@ -1433,7 +1433,96 @@ elif st.session_state.page == "Badges":
 
     save_data(data)  # FIX 3: Save after badge updates
 
-#
+# ---------- SETTINGS PAGE ----------
+elif st.session_state.page == "Settings":
+    navbar()
+    st.markdown("<h2 style='color:#FFD166;'>⚙️ Settings</h2>", unsafe_allow_html=True)
+
+    # Ensure the user exists in data
+    user = ensure_user(st.session_state.user)
+    profile = user.get("profile", {})
+
+    # 🧠 Ensure age group field exists
+    if "age_group" not in profile:
+        profile["age_group"] = "Not set"
+
+    # --- User Info Section ---
+    st.subheader("👤 User Information")
+    st.markdown(f"**Username:** {profile.get('name', st.session_state.user)}")
+    st.markdown(f"**Age Group:** {profile.get('age_group', 'Not provided')}")
+    st.markdown(f"**Daily Goal:** {user.get('goal', 2)} L")
+
+    # --- Update Goal Section ---
+    new_goal = st.number_input(
+        "Update your daily water goal (litres):",
+        min_value=0.5,
+        max_value=10.0,
+        value=user.get("goal", 2.0),
+        step=0.1
+    )
+    if st.button("💾 Update Goal"):
+        user["goal"] = new_goal
+        save_data(data)
+        st.success("✅ Goal updated successfully!")
+
+    st.markdown("---")
+
+    # --- Reminder Settings ---
+    st.subheader("🔔 Reminder Settings")
+    rem_enabled = st.checkbox(
+        "Enable in-app reminders (works while app is open)",
+        value=user["settings"].get("reminder_enabled", False)
+    )
+    rem_minutes = st.number_input(
+        "Reminder interval (minutes):",
+        min_value=15, max_value=720,
+        value=user["settings"].get("reminder_minutes", 120),
+        step=15
+    )
+    rem_start = st.time_input(
+        "Start reminders at:",
+        value=time.fromisoformat(user["settings"].get("reminder_start_time", "09:00"))
+    )
+
+    if st.button("💾 Save Reminder Settings"):
+        user["settings"]["reminder_enabled"] = rem_enabled
+        user["settings"]["reminder_minutes"] = int(rem_minutes)
+        user["settings"]["reminder_start_time"] = rem_start.strftime("%H:%M")
+        save_data(data)
+        st.success("Reminder settings saved!")
+
+    st.markdown("---")
+
+    # --- Logout Section ---
+    st.subheader("🚪 Logout")
+    if st.button("Logout"):
+        st.session_state.user = None
+        st.session_state.page = "Login"
+        st.success("Logged out successfully!")
+        st.rerun()
+
+    st.markdown("---")
+
+# --- Reset All Data ---
+st.subheader("🗑️ Reset All Data")
+st.warning("This will permanently delete all your logs, badges, and progress.")
+
+RC = st.checkbox("I confirm I want to delete all my data.")
+
+if st.button("❌ Delete All Data"):
+    if RC:
+        del data["users"][st.session_state.user]
+        save_data(data)
+        st.session_state.user = None
+        st.session_state.page = "Login"
+        st.success("All your data has been deleted.")
+        st.rerun()
+    else:
+        st.warning("Please confirm before deleting your data.")
+
+# ---------- SAVE ----------
+save_data(data)
+
 
 
 
