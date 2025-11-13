@@ -98,26 +98,23 @@ if "page" not in st.session_state:
 if "user" not in st.session_state:
     st.session_state.user = None
 
-# ---------- AGE-BASED GOAL CALCULATOR (FEATURE 1) ----------
+ ---------- AGE-BASED GOAL CALCULATOR (FEATURE 1) ----------
 def calculate_daily_goal(age, weight=None, activity_level="moderate"):
-    """
-    Calculate recommended daily water intake based on age and other factors
-    Age ranges and recommendations based on health guidelines
-    """
+   
     if age < 4:
-        return 1.3  # Toddlers: 1.3L
+        return 1.3 
     elif age < 9:
-        return 1.7  # Children 4-8: 1.7L
+        return 1.7 
     elif age < 14:
-        return 2.4 if age >= 9 else 2.1  # Pre-teens: 2.1-2.4L
+        return 2.4 if age >= 9 else 2.1  
     elif age < 19:
-        return 2.8  # Teenagers: 2.8L
+        return 2.8 
     elif age < 51:
-        return 3.0  # Adults: 3.0L
+        return 3.0  
     elif age < 71:
-        return 2.8  # Middle-aged: 2.8L
+        return 2.8  
     else:
-        return 2.5  # Seniors: 2.5L
+        return 2.5  
 
 # ---------- MOTIVATIONAL MESSAGES (FEATURE 4) ----------
 def get_motivational_message(percentage):
@@ -125,7 +122,7 @@ def get_motivational_message(percentage):
     if percentage == 0:
         return "🌵 Time to start hydrating! Your body needs water!"
     elif percentage < 20:
-        return "💧 Great first step! Keep the momentum going!"
+        return "💧 Great first step! Keep going....!!"
     elif percentage < 40:
         return "😊 Good progress! You're building a healthy habit!"
     elif percentage < 60:
@@ -137,10 +134,10 @@ def get_motivational_message(percentage):
     elif percentage >= 100:
         return "🎉 GOAL ACHIEVED! You're a hydration champion! 🏆"
     else:
-        return "💦 Keep drinking water!"
+        return " Keep drinking water...!"
 
 def get_mascot_image(percentage):
-    """Return mascot image path based on progress"""
+  
     if percentage < 20:
         return r"image/hardrated 1.webp"  # Dehydrated
     elif percentage < 50:
@@ -235,7 +232,7 @@ def navbar():
 def ensure_user(name, password=None):
     if name not in data["users"]:
         data["users"][name] = {
-            "profile": {"name": name, "password": password or "", "age": None, "weight": None},
+            "profile": {"name": name, "password": password or "", "age": age , "weight": None},
             "history": {},
             "badges": [],
             "challenges": [],
@@ -752,4 +749,5 @@ if st.button("❌ Delete All Data"):
 
 # ---------- SAVE ----------
 save_data(data)
+
 
