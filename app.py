@@ -98,9 +98,8 @@ if "page" not in st.session_state:
 if "user" not in st.session_state:
     st.session_state.user = None
 
- ---------- AGE-BASED GOAL CALCULATOR (FEATURE 1) ----------
+# ---------- AGE-BASED GOAL CALCULATOR (FEATURE 1) ----------
 def calculate_daily_goal(age, weight=None, activity_level="moderate"):
-   
     if age < 4:
         return 1.3 
     elif age < 9:
@@ -137,7 +136,6 @@ def get_motivational_message(percentage):
         return " Keep drinking water...!"
 
 def get_mascot_image(percentage):
-  
     if percentage < 20:
         return r"image/hardrated 1.webp"  # Dehydrated
     elif percentage < 50:
@@ -277,6 +275,7 @@ if st.session_state.page == "Login":
         st.info(f"💡 Recommended daily intake: {recommended_goal:.1f} L")
 
         custom_goal = st.slider("Adjust your goal (L):", 0.5, 5.0, recommended_goal, 0.1)
+        st.success(f"✅ Your daily goal is set to: **{custom_goal:.1f} litres** ({int(custom_goal * 1000)} ml)")
 
         if st.button("Create Account 🚀"):
             if not name.strip() or not password.strip():
@@ -294,7 +293,7 @@ if st.session_state.page == "Login":
                 st.session_state.page = "Dashboard"
                 st.rerun()
 
-    else:
+    else:  # Login mode
         if st.button("Login 🔑"):
             if name not in data["users"]:
                 st.error("❌ User not found! Please sign up first.")
@@ -303,52 +302,6 @@ if st.session_state.page == "Login":
             else:
                 st.session_state.user = name
                 st.success(f"✅ Welcome back, {name}!")
-                st.session_state.page = "Dashboard"
-                st.rerun()
-
-
-
-        # Calculate and display recommended goal (FEATURE 1 - Part 2)
-        recommended_goal = calculate_daily_goal(st.session_state.age)
-        st.info(f"💡 **Recommended daily water intake for your age:** {recommended_goal:.1f} litres")
-        
-        # Allow user to adjust the goal (FEATURE 1 - Part 3)
-        st.write("**Adjust your daily goal (optional):**")
-        custom_goal = st.slider(
-            "Daily water goal (litres):", 
-            min_value=0.5, 
-            max_value=5.0, 
-            value=float(recommended_goal), 
-            step=0.1
-        )
-        
-        st.success(f"✅ Your daily goal is set to: **{custom_goal:.1f} litres** ({int(custom_goal * 1000)} ml)")
-
-        if st.button("Create Account 🚀"):
-            if not name.strip() or not password.strip():
-                st.warning("⚠️ Please enter both username and password!")
-            elif name in data["users"]:
-                st.error("❌ Username already exists! Try logging in instead.")
-            else:
-                st.session_state.user = name.strip()
-                user = ensure_user(st.session_state.user, password)
-                user["profile"]["age"] = st.session_state.age
-                user["daily_goal_ml"] = int(custom_goal * 1000)
-                save_data(data)
-                st.success(f"🎉 Welcome {name}! Your account has been created!")
-                st.balloons()
-                st.session_state.page = "Dashboard"
-                st.rerun()
-
-    else:  # Login mode
-        if st.button("Login 🔑"):
-            if name not in data["users"]:
-                st.error("❌ User not found! Please sign up first.")
-            elif data["users"][name]["profile"]["password"] != password:
-                st.error("❌ Incorrect password! Please try again.")
-            else:
-                st.session_state.user = name
-                st.success(f"✅ Welcome back, {name}! 💧")
                 st.session_state.page = "Dashboard"
                 st.rerun()
 
@@ -408,7 +361,7 @@ elif st.session_state.page == "Dashboard":
     # Progress bar
     st.progress(min(progress_percentage / 100, 1.0))
 
-    # COMPARISON: Current vs Target (Optional Creative Feature)
+    # COMPARISON: Current vs Target
     st.markdown("### 📊 Your Progress vs Target")
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -427,7 +380,7 @@ elif st.session_state.page == "Dashboard":
     st.pyplot(fig)
     plt.close()
 
-    # FEATURE 5: Reset button for today (clearly labeled)
+    # FEATURE 5: Reset button for today
     st.markdown("---")
     st.subheader("🔄 Reset Today's Progress")
     st.warning("⚠️ This will clear all water intake logged for today. Use this if you made a mistake or want to start fresh.")
@@ -479,11 +432,21 @@ elif st.session_state.page == "Log Water":
         ds = today_str()
         if ds not in user["history"]:
             user["history"][ds] = {"total_ml": 0, "entries": []}
-        tnow = datetime.now().strftime("%H:%M:%S")
-        user["history"][ds]["entries"].append({"time": tnow, "ml": int(amount)})
+        
+        # FIX: Use proper datetime formatting with 12-hour format
+        now = datetime.now()
+        time_24hr = now.strftime("%H:%M:%S")  # 24-hour for storage
+        time_12hr = now.strftime("%I:%M %p")  # 12-hour for display
+        
+        user["history"][ds]["entries"].append({
+            "time": time_24hr,  # Store in 24-hour format
+            "time_display": time_12hr,  # Store display format too
+            "ml": int(amount),
+            "timestamp": now.isoformat()  # Full timestamp for sorting
+        })
         user["history"][ds]["total_ml"] += int(amount)
         save_data(data)
-        st.success(f"✅ Added {amount} ml at {tnow}!")
+        st.success(f"✅ Added {amount} ml at {time_12hr}!")
         st.balloons()
         st.rerun()
 
@@ -536,13 +499,48 @@ elif st.session_state.page == "Log Water":
         st.progress(min(progress_percentage / 100, 1.0))
         st.markdown(f"<h3 style='text-align:center;'>{today_total} ml / {daily_goal} ml</h3>", unsafe_allow_html=True)
 
-    # Show recent entries
+    # Show recent entries - FIX: Better time display with sorting
     st.markdown("---")
     st.markdown("### 📝 Today's Log History")
     if today_str() in user["history"] and user["history"][today_str()]["entries"]:
         entries = user["history"][today_str()]["entries"]
-        for idx, entry in enumerate(reversed(entries[-10:]), 1):  # Show last 10
-            st.text(f"🕒 {entry['time']} — {entry['ml']} ml")
+        
+        # Sort entries by timestamp if available, otherwise by time
+        try:
+            sorted_entries = sorted(entries, key=lambda x: x.get("timestamp", x.get("time", "")), reverse=True)
+        except:
+            sorted_entries = entries[::-1]  # Just reverse if sorting fails
+        
+        # Display last 10 entries
+        st.markdown("""
+        <style>
+        .log-entry {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            margin: 5px 0;
+            border-radius: 10px;
+            border-left: 4px solid #00BFFF;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        for entry in sorted_entries[:10]:
+            # Try to use display time first, fallback to converting 24hr time
+            if "time_display" in entry:
+                display_time = entry["time_display"]
+            else:
+                # Convert old format times to 12-hour format
+                try:
+                    time_obj = datetime.strptime(entry['time'], "%H:%M:%S")
+                    display_time = time_obj.strftime("%I:%M %p")
+                except:
+                    display_time = entry['time']
+            
+            st.markdown(f"""
+                <div class='log-entry'>
+                    🕒 <strong>{display_time}</strong> — <strong>{entry['ml']} ml</strong>
+                </div>
+            """, unsafe_allow_html=True)
     else:
         st.info("No water logged yet today. Start now!")
 
@@ -599,7 +597,7 @@ elif st.session_state.page == "Challenges":
 # ---------- BADGES ----------
 elif st.session_state.page == "Badges":
     navbar()
-    user = ensure_user(st.session_state.user)  # FIX 2: Removed duplicate data loading
+    user = ensure_user(st.session_state.user)
 
     st.markdown("<h2 style='color:#FFD166;'>🏅 Your Badges & Achievements</h2>", unsafe_allow_html=True)
     
@@ -780,6 +778,7 @@ if st.button("❌ Delete All Data"):
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
