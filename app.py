@@ -1412,8 +1412,7 @@ elif st.session_state.page == "Badges":
         user["badges"].append("💧 First Sip!")
         badges_earned.append("💧 First Sip! — You've started your hydration journey!")
 
-    if streak >= 3 and "🌱 3-Day Streak" not in user["badges"]:
-        user["badges"].append("🌱 3-Day
+   
 
 
 
