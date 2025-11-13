@@ -232,50 +232,81 @@ def navbar():
 def ensure_user(name, password=None):
     if name not in data["users"]:
         data["users"][name] = {
-            "profile": {"name": name, "password": password or "", "age": age , "weight": None},
+            "profile": {"name": name, "password": password or "", "age": None, "weight": None},
             "history": {},
             "badges": [],
             "challenges": [],
-            "daily_goal_ml": 2000,  # Default goal
+            "daily_goal_ml": 2000,
             "settings": {
                 "reminder_enabled": False,
                 "reminder_minutes": 120,
-                "reminder_start_time": "09:00",
-                "theme": "light"
+                "reminder_start_time": "09:00"
             }
         }
     return data["users"][name]
 
 # ---------- LOGIN / SIGN UP ----------
 if st.session_state.page == "Login":
-    st.markdown("<h1 style='color:white;text-align:center;font-size:48px;'>💧 Welcome to WaterBuddy!</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center;'>💧 Welcome to WaterBuddy!</h1>", unsafe_allow_html=True)
     st.subheader("🌊 Hydrate Your Lifestyle with Smart Tracking")
     st.markdown("---")
 
     mode = st.radio("Select mode:", ["Login", "Sign Up"], horizontal=True)
-
     name = st.text_input("Username:")
     password = st.text_input("Password:", type="password")
 
     if mode == "Sign Up":
         st.markdown("### 🎂 Tell us about yourself")
-        
-        # Age selector with plus and minus buttons (FEATURE 1 - Part 1)
-        st.write("**Select your age:**")
+
         if "age" not in st.session_state:
-            st.session_state.age = 25  # Default age
-        
+            st.session_state.age = 18
+
         col1, col2, col3 = st.columns([1, 2, 1])
         with col1:
-            if st.button("➖", key="minus_age") and st.session_state.age > 1:
+            if st.button("➖") and st.session_state.age > 1:
                 st.session_state.age -= 1
-                st.rerun()  # FIX 1: Added rerun to update display
+                st.rerun()
         with col2:
-            st.markdown(f"<h2 style='text-align:center;color:white;'>{st.session_state.age} years old</h2>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='text-align:center;'>{st.session_state.age} years old</h3>", unsafe_allow_html=True)
         with col3:
-            if st.button("➕", key="plus_age") and st.session_state.age < 120:
+            if st.button("➕") and st.session_state.age < 120:
                 st.session_state.age += 1
-                st.rerun()  # FIX 1: Added rerun to update display
+                st.rerun()
+
+        recommended_goal = calculate_daily_goal(st.session_state.age)
+        st.info(f"💡 Recommended daily intake: {recommended_goal:.1f} L")
+
+        custom_goal = st.slider("Adjust your goal (L):", 0.5, 5.0, recommended_goal, 0.1)
+
+        if st.button("Create Account 🚀"):
+            if not name.strip() or not password.strip():
+                st.warning("⚠️ Please enter both username and password!")
+            elif name in data["users"]:
+                st.error("❌ Username already exists! Try logging in.")
+            else:
+                st.session_state.user = name
+                user = ensure_user(name, password)
+                user["profile"]["age"] = st.session_state.age
+                user["daily_goal_ml"] = int(custom_goal * 1000)
+                save_data(data)
+                st.success(f"🎉 Account created for {name}!")
+                st.balloons()
+                st.session_state.page = "Dashboard"
+                st.rerun()
+
+    else:
+        if st.button("Login 🔑"):
+            if name not in data["users"]:
+                st.error("❌ User not found! Please sign up first.")
+            elif data["users"][name]["profile"]["password"] != password:
+                st.error("❌ Incorrect password!")
+            else:
+                st.session_state.user = name
+                st.success(f"✅ Welcome back, {name}!")
+                st.session_state.page = "Dashboard"
+                st.rerun()
+
+
 
         # Calculate and display recommended goal (FEATURE 1 - Part 2)
         recommended_goal = calculate_daily_goal(st.session_state.age)
@@ -749,5 +780,6 @@ if st.button("❌ Delete All Data"):
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
