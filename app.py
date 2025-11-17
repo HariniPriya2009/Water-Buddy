@@ -90,7 +90,16 @@ def save_data(data):
 def today_str():
     return date.today().isoformat()
 
-data = load_data()
+# DON'T reload data here if you're inside a function/conditional
+# data = load_data()  # <-- Remove this if it's being called repeatedly
+
+# Initialize session state
+if "page" not in st.session_state:
+    st.session_state.page = "Login"
+
+
+
+
 
 # ---------- INIT ----------
 if "page" not in st.session_state:
@@ -249,6 +258,9 @@ if st.session_state.page == "Login":
     st.subheader("🌊 Hydrate Your Lifestyle with Smart Tracking")
     st.markdown("---")
 
+    # Reload data to get latest users
+    data = load_data()
+
     mode = st.radio("Select mode:", ["Login", "Sign Up"], horizontal=True)
     name = st.text_input("Username:")
     password = st.text_input("Password:", type="password")
@@ -295,20 +307,37 @@ if st.session_state.page == "Login":
             elif name in data["users"]:
                 st.error("❌ Username already exists! Try logging in.")
             else:
-                st.session_state.user = name
-                user = ensure_user(name, password)
-                user["profile"]["age"] = st.session_state.age
-                user["daily_goal_ml"] = int(custom_goal * 1000)
+                # Create new user with all required data
+                data["users"][name] = {
+                    "profile": {
+                        "password": password,
+                        "age": st.session_state.age,
+                        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    },
+                    "daily_goal_ml": int(custom_goal * 1000),
+                    "history": []
+                }
+                
+                # Save data to file
                 save_data(data)
-                st.success(f"🎉 Account created for {name}!")
-                st.balloons()
-                st.session_state.page = "Dashboard"
-                st.rerun()
+                
+                # Verify save was successful
+                verify_data = load_data()
+                if name in verify_data["users"]:
+                    st.session_state.user = name
+                    st.success(f"🎉 Account created for {name}!")
+                    st.balloons()
+                    st.session_state.page = "Dashboard"
+                    st.rerun()
+                else:
+                    st.error("❌ Error saving account. Please try again.")
 
     else:  # Login mode
         if st.button("Login 🔑"):
             if name not in data["users"]:
                 st.error("❌ User not found! Please sign up first.")
+                # Debug info (remove in production)
+                st.info(f"Available users: {list(data['users'].keys())}")
             elif data["users"][name]["profile"]["password"] != password:
                 st.error("❌ Incorrect password!")
             else:
@@ -316,6 +345,7 @@ if st.session_state.page == "Login":
                 st.success(f"✅ Welcome back, {name}!")
                 st.session_state.page = "Dashboard"
                 st.rerun()
+
 
 # ---------- DASHBOARD ----------
 elif st.session_state.page == "Dashboard":
@@ -736,6 +766,7 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
