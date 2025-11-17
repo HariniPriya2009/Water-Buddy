@@ -498,6 +498,22 @@ if st.session_state.page == "Login":
                 st.success(f"✅ Welcome back, {name}!")
                 st.session_state.page = "Dashboard"
                 st.rerun()
+# ---------- CHECK REMINDER (For logged in users) ----------
+if st.session_state.user and st.session_state.page != "Login":
+    user = ensure_user(st.session_state.user)
+    
+    if check_reminder(user):
+        st.session_state.show_reminder = True
+    
+    if st.session_state.show_reminder:
+        show_reminder_popup(user)
+        
+        col_dismiss = st.columns([4, 1])
+        with col_dismiss[1]:
+            if st.button("❌ Dismiss", key="dismiss_reminder"):
+                dismiss_reminder()
+                st.rerun()
+
 
 # ---------- DASHBOARD ----------
 elif st.session_state.page == "Dashboard":
@@ -905,7 +921,65 @@ elif st.session_state.page == "Settings":
         st.success("✅ Goal updated successfully!")
 
     st.markdown("---")
+
+    # ✅ NEW: REMINDER SETTINGS
+    st.subheader("🔔 Reminder Settings")
+    
+    settings = user.get("settings", {})
+    
+    reminder_enabled = st.toggle(
+        "Enable Hydration Reminders",
+        value=settings.get("reminder_enabled", True),
+        help="Get periodic reminders to drink water throughout the day"
+    )
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        reminder_minutes = st.selectbox(
+            "Reminder Interval",
+            options=[30, 60, 90, 120, 180, 240],
+            index=[30, 60, 90, 120, 180, 240].index(settings.get("reminder_minutes", 120)),
+            format_func=lambda x: f"Every {x} minutes" if x < 60 else f"Every {x//60} hour{'s' if x > 60 else ''}",
+            help="How often you want to be reminded"
+        )
+    
+    with col2:
+        start_time = st.time_input(
+            "Start Time",
+            value=datetime.strptime(settings.get("reminder_start_time", "09:00"), "%H:%M").time(),
+            help="When reminders should start"
+        )
+    
+    end_time = st.time_input(
+        "End Time",
+        value=datetime.strptime(settings.get("reminder_end_time", "22:00"), "%H:%M").time(),
+        help="When reminders should stop"
+    )
+    
+    if st.button("💾 Save Reminder Settings", type="primary"):
+        user["settings"] = {
+            "reminder_enabled": reminder_enabled,
+            "reminder_minutes": reminder_minutes,
+            "reminder_start_time": start_time.strftime("%H:%M"),
+            "reminder_end_time": end_time.strftime("%H:%M")
+        }
+        save_data(data)
+        st.session_state.data = data
+        st.success("✅ Reminder settings saved!")
+        
+        # Reset reminder state
+        st.session_state.last_reminder_time = None
+        st.session_state.reminder_dismissed_today = []
+        st.rerun()
+    
+    # Show current settings
+    if reminder_enabled:
+        st.info(f"🔔 Reminders are **enabled** from **{settings.get('reminder_start_time', '09:00')}** to **{settings.get('reminder_end_time', '22:00')}** every **{reminder_minutes} minutes**")
+    else:
+        st.warning("🔕 Reminders are currently **disabled**")
+        
     st.subheader("🚪 Logout")
+    
     if st.button("Logout"):
         st.session_state.user = None
         st.session_state.page = "Login"
@@ -914,6 +988,7 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
