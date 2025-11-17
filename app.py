@@ -76,6 +76,29 @@ input, textarea, select {
     margin: 5px 0;
     border-radius: 10px;
     border-left: 4px solid #00BFFF;
+.reminder-popup {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #FF6B6B, #FFE66D);
+    padding: 20px 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    z-index: 9999;
+    animation: slideIn 0.5s ease-out;
+    max-width: 350px;
+}
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
 }
 </style>
 """
@@ -891,6 +914,7 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
