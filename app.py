@@ -110,6 +110,12 @@ if "user" not in st.session_state:
     st.session_state.user = None
 if "age" not in st.session_state:
     st.session_state.age = 18
+if "show_reminder" not in st.session_state:
+    st.session_state.show_reminder = False
+if "last_reminder_time" not in st.session_state:
+    st.session_state.last_reminder_time = None
+if "reminder_dismissed_today" not in st.session_state:
+    st.session_state.reminder_dismissed_today = []
 
 # ---------- LOAD DATA ONCE ----------
 if "data" not in st.session_state:
@@ -134,7 +140,115 @@ def calculate_daily_goal(age, weight=None, activity_level="moderate"):
         return 2.8  
     else:
         return 2.5  
+# ---------- REMINDER SYSTEM ----------
+def check_reminder(user):
+    """Check if reminder should be shown"""
+    settings = user.get("settings", {})
+    
+    if not settings.get("reminder_enabled", False):
+        return False
+    
+    now = datetime.now()
+    today_key = now.strftime("%Y-%m-%d")
+    
+    # Reset dismissed list daily
+    if st.session_state.reminder_dismissed_today and \
+       st.session_state.reminder_dismissed_today[0] != today_key:
+        st.session_state.reminder_dismissed_today = []
+    
+    # Check if already dismissed recently
+    current_time_key = now.strftime("%Y-%m-%d %H:%M")
+    if current_time_key in st.session_state.reminder_dismissed_today:
+        return False
+    
+    # Get reminder settings
+    reminder_interval = settings.get("reminder_minutes", 120)
+    start_time_str = settings.get("reminder_start_time", "09:00")
+    end_time_str = settings.get("reminder_end_time", "22:00")
+    
+    # Parse times
+    try:
+        start_time = datetime.strptime(start_time_str, "%H:%M").time()
+        end_time = datetime.strptime(end_time_str, "%H:%M").time()
+    except:
+        start_time = datetime.strptime("09:00", "%H:%M").time()
+        end_time = datetime.strptime("22:00", "%H:%M").time()
+    
+    current_time = now.time()
+    
+    # Check if within active hours
+    if not (start_time <= current_time <= end_time):
+        return False
+    
+    # Check last reminder time
+    if st.session_state.last_reminder_time:
+        try:
+            last_reminder = datetime.fromisoformat(st.session_state.last_reminder_time)
+            time_diff = (now - last_reminder).total_seconds() / 60
+            
+            if time_diff < reminder_interval:
+                return False
+        except:
+            pass
+    
+    # Check if goal not met
+    today_total = user["history"].get(today_str(), {}).get("total_ml", 0)
+    daily_goal = user.get("daily_goal_ml", 2000)
+    
+    if today_total >= daily_goal:
+        return False
+    
+    return True
 
+def show_reminder_popup(user):
+    """Display reminder popup"""
+    today_total = user["history"].get(today_str(), {}).get("total_ml", 0)
+    daily_goal = user.get("daily_goal_ml", 2000)
+    remaining = daily_goal - today_total
+    
+    reminder_messages = [
+        "💧 Time to hydrate! Your body needs water!",
+        "🌊 Don't forget to drink water!",
+        "💦 Stay hydrated, stay healthy!",
+        "🥤 A glass of water keeps the doctor away!",
+        "🌟 You're doing great! Keep drinking!",
+        "🏃‍♀️ Hydration = Better performance!",
+        "🧠 Water boosts your brain power!",
+        "😊 Drink up and feel refreshed!"
+    ]
+    
+    st.markdown(f"""
+        <div class='reminder-popup' id='reminderPopup'>
+            <div style='text-align: center;'>
+                <h2 style='margin: 0; color: #333;'>💧 Hydration Reminder!</h2>
+                <p style='font-size: 16px; color: #333; margin: 10px 0;'>
+                    {random.choice(reminder_messages)}
+                </p>
+                <div style='background: white; padding: 10px; border-radius: 10px; margin: 10px 0;'>
+                    <p style='margin: 5px 0; color: #333; font-weight: bold;'>
+                        Today: {today_total} ml / {daily_goal} ml
+                    </p>
+                    <p style='margin: 5px 0; color: #FF6B6B; font-weight: bold;'>
+                        Remaining: {remaining} ml
+                    </p>
+                </div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+def dismiss_reminder():
+    """Dismiss current reminder"""
+    now = datetime.now()
+    current_time_key = now.strftime("%Y-%m-%d %H:%M")
+    today_key = now.strftime("%Y-%m-%d")
+    
+    if not st.session_state.reminder_dismissed_today or \
+       st.session_state.reminder_dismissed_today[0] != today_key:
+        st.session_state.reminder_dismissed_today = [today_key]
+    
+    st.session_state.reminder_dismissed_today.append(current_time_key)
+    st.session_state.last_reminder_time = now.isoformat()
+    st.session_state.show_reminder = False
 # ---------- MOTIVATIONAL MESSAGES (FEATURE 4) ----------
 def get_motivational_message(percentage):
     """Return motivational message based on progress percentage"""
@@ -777,6 +891,7 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
