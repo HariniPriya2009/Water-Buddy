@@ -70,6 +70,13 @@ input, textarea, select {
     margin: 15px 0;
     backdrop-filter: blur(10px);
 }
+.log-entry {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px 15px;
+    margin: 5px 0;
+    border-radius: 10px;
+    border-left: 4px solid #00BFFF;
+}
 </style>
 """
 st.markdown(page_bg, unsafe_allow_html=True)
@@ -78,37 +85,41 @@ st.markdown(page_bg, unsafe_allow_html=True)
 DATA_FILE = "waterbuddy_data.json"
 
 def load_data():
+    """Load data from JSON file"""
     if not os.path.exists(DATA_FILE):
         return {"users": {}}
-    with open(DATA_FILE, "r") as f:
-        return json.load(f)
+    try:
+        with open(DATA_FILE, "r") as f:
+            return json.load(f)
+    except json.JSONDecodeError:
+        return {"users": {}}
 
 def save_data(data):
+    """Save data to JSON file"""
     with open(DATA_FILE, "w") as f:
         json.dump(data, f, indent=2, default=str)
 
 def today_str():
+    """Return today's date as ISO string"""
     return date.today().isoformat()
 
-# DON'T reload data here if you're inside a function/conditional
-# data = load_data()  # <-- Remove this if it's being called repeatedly
-
-# Initialize session state
-if "page" not in st.session_state:
-    st.session_state.page = "Login"
-
-
-
-
-
-# ---------- INIT ----------
+# ---------- INITIALIZE SESSION STATE ----------
 if "page" not in st.session_state:
     st.session_state.page = "Login"
 if "user" not in st.session_state:
     st.session_state.user = None
+if "age" not in st.session_state:
+    st.session_state.age = 18
+
+# ---------- LOAD DATA ONCE ----------
+if "data" not in st.session_state:
+    st.session_state.data = load_data()
+
+data = st.session_state.data
 
 # ---------- AGE-BASED GOAL CALCULATOR (FEATURE 1) ----------
 def calculate_daily_goal(age, weight=None, activity_level="moderate"):
+    """Calculate recommended daily water intake based on age"""
     if age < 4:
         return 1.3 
     elif age < 9:
@@ -130,7 +141,7 @@ def get_motivational_message(percentage):
     if percentage == 0:
         return "🌵 Time to start hydrating! Your body needs water!"
     elif percentage < 20:
-        return "💧 Great first step! Keep going....!!"
+        return "💧 Great first step! Keep going!"
     elif percentage < 40:
         return "😊 Good progress! You're building a healthy habit!"
     elif percentage < 60:
@@ -139,20 +150,19 @@ def get_motivational_message(percentage):
         return "🌟 Excellent work! Almost at your goal!"
     elif percentage < 100:
         return "🔥 So close! Just a bit more to reach your target!"
-    elif percentage >= 100:
-        return "🎉 GOAL ACHIEVED! You're a hydration champion! 🏆"
     else:
-        return " Keep drinking water...!"
+        return "🎉 GOAL ACHIEVED! You're a hydration champion! 🏆"
 
 def get_mascot_image(percentage):
+    """Return mascot image path based on progress"""
     if percentage < 20:
-        return r"image/hardrated 1.webp"  # Dehydrated
+        return r"image/hardrated 1.webp"
     elif percentage < 50:
-        return r"image/happy-cute hydration 2.gif"  # Getting there
+        return r"image/happy-cute hydration 2.gif"
     elif percentage < 100:
-        return r"image/hydrated 3.webp"  # Almost done
+        return r"image/hydrated 3.webp"
     else:
-        return r"image/strong 4.webp"  # Goal achieved!
+        return r"image/strong 4.webp"
 
 # ---------- FUN FACTS / DAILY TIPS ----------
 fun_facts = [
@@ -225,21 +235,29 @@ def plot_7day_intake(user):
 
 # ---------- NAVBAR ----------
 def navbar():
+    """Display navigation bar"""
     pages = ["Dashboard", "Log Water", "Challenges", "Badges", "Settings"]
     cols = st.columns(len(pages))
     for i, p in enumerate(pages):
         if st.session_state.page == p:
             cols[i].markdown(f"**➡️ {p}**")
-        elif cols[i].button(p):
+        elif cols[i].button(p, key=f"nav_{p}"):
             st.session_state.page = p
             st.rerun()
     st.markdown("---")
 
 # ---------- USER MANAGEMENT ----------
-def ensure_user(name, password=None):
+def ensure_user(name):
+    """Ensure user exists in data, create if not"""
     if name not in data["users"]:
         data["users"][name] = {
-            "profile": {"name": name, "password": password or "", "age": None, "weight": None},
+            "profile": {
+                "name": name,
+                "password": "",
+                "age": None,
+                "weight": None,
+                "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            },
             "history": {},
             "badges": [],
             "challenges": [],
@@ -250,6 +268,8 @@ def ensure_user(name, password=None):
                 "reminder_start_time": "09:00"
             }
         }
+        save_data(data)
+        st.session_state.data = data
     return data["users"][name]
 
 # ---------- LOGIN / SIGN UP ----------
@@ -258,26 +278,12 @@ if st.session_state.page == "Login":
     st.subheader("🌊 Hydrate Your Lifestyle with Smart Tracking")
     st.markdown("---")
 
-    # Reload data to get latest users
-    data = load_data()
-
     mode = st.radio("Select mode:", ["Login", "Sign Up"], horizontal=True)
     name = st.text_input("Username:")
     password = st.text_input("Password:", type="password")
 
     if mode == "Sign Up":
         st.markdown("### YOUR AGE")
-        
-        # Initialize age in session state if not exists
-        if "age" not in st.session_state:
-            st.session_state.age = 18
-
-        # Number input for age
-        age_input = st.number_input("Age:", 1, 120, st.session_state.age, key="age_input")
-        
-        # Update session state if number input changes
-        if age_input != st.session_state.age:
-            st.session_state.age = age_input
 
         # Age adjustment buttons
         col1, col2, col3 = st.columns([1, 2, 1])
@@ -291,6 +297,12 @@ if st.session_state.page == "Login":
             if st.button("➕") and st.session_state.age < 120:
                 st.session_state.age += 1
                 st.rerun()
+
+        # Number input for age (synced with buttons)
+        age_input = st.number_input("Age:", 1, 120, st.session_state.age, key="age_input")
+        if age_input != st.session_state.age:
+            st.session_state.age = age_input
+            st.rerun()
 
         # Calculate recommended goal based on age
         recommended_goal = calculate_daily_goal(st.session_state.age)
@@ -310,34 +322,38 @@ if st.session_state.page == "Login":
                 # Create new user with all required data
                 data["users"][name] = {
                     "profile": {
+                        "name": name,
                         "password": password,
                         "age": st.session_state.age,
+                        "weight": None,
                         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     },
                     "daily_goal_ml": int(custom_goal * 1000),
-                    "history": []
+                    "history": {},
+                    "badges": [],
+                    "challenges": [],
+                    "settings": {
+                        "reminder_enabled": False,
+                        "reminder_minutes": 120,
+                        "reminder_start_time": "09:00"
+                    }
                 }
                 
                 # Save data to file
                 save_data(data)
+                st.session_state.data = data
                 
-                # Verify save was successful
-                verify_data = load_data()
-                if name in verify_data["users"]:
-                    st.session_state.user = name
-                    st.success(f"🎉 Account created for {name}!")
-                    st.balloons()
-                    st.session_state.page = "Dashboard"
-                    st.rerun()
-                else:
-                    st.error("❌ Error saving account. Please try again.")
+                # Set user session
+                st.session_state.user = name
+                st.success(f"🎉 Account created for {name}!")
+                st.balloons()
+                st.session_state.page = "Dashboard"
+                st.rerun()
 
     else:  # Login mode
         if st.button("Login 🔑"):
             if name not in data["users"]:
                 st.error("❌ User not found! Please sign up first.")
-                # Debug info (remove in production)
-                st.info(f"Available users: {list(data['users'].keys())}")
             elif data["users"][name]["profile"]["password"] != password:
                 st.error("❌ Incorrect password!")
             else:
@@ -345,7 +361,6 @@ if st.session_state.page == "Login":
                 st.success(f"✅ Welcome back, {name}!")
                 st.session_state.page = "Dashboard"
                 st.rerun()
-
 
 # ---------- DASHBOARD ----------
 elif st.session_state.page == "Dashboard":
@@ -434,6 +449,7 @@ elif st.session_state.page == "Dashboard":
             if today in user["history"]:
                 user["history"][today] = {"total_ml": 0, "entries": []}
                 save_data(data)
+                st.session_state.data = data
                 st.success("✅ Today's progress has been reset!")
                 st.rerun()
             else:
@@ -457,11 +473,16 @@ elif st.session_state.page == "Log Water":
     quick_amounts = [100, 200, 250, 330, 500]
     amount = None
     
-    if col1.button(f"💧 {quick_amounts[0]} ml", use_container_width=True): amount = quick_amounts[0]
-    if col2.button(f"💧 {quick_amounts[1]} ml", use_container_width=True): amount = quick_amounts[1]
-    if col3.button(f"💧 {quick_amounts[2]} ml", use_container_width=True): amount = quick_amounts[2]
-    if col4.button(f"💧 {quick_amounts[3]} ml", use_container_width=True): amount = quick_amounts[3]
-    if col5.button(f"💧 {quick_amounts[4]} ml", use_container_width=True): amount = quick_amounts[4]
+    if col1.button(f"💧 {quick_amounts[0]} ml", use_container_width=True, key="quick_100"): 
+        amount = quick_amounts[0]
+    if col2.button(f"💧 {quick_amounts[1]} ml", use_container_width=True, key="quick_200"): 
+        amount = quick_amounts[1]
+    if col3.button(f"💧 {quick_amounts[2]} ml", use_container_width=True, key="quick_250"): 
+        amount = quick_amounts[2]
+    if col4.button(f"💧 {quick_amounts[3]} ml", use_container_width=True, key="quick_330"): 
+        amount = quick_amounts[3]
+    if col5.button(f"💧 {quick_amounts[4]} ml", use_container_width=True, key="quick_500"): 
+        amount = quick_amounts[4]
 
     st.markdown("### 🎯 Custom Amount")
     custom = st.number_input("Enter custom amount (ml):", min_value=50, max_value=2000, value=250, step=50)
@@ -475,19 +496,20 @@ elif st.session_state.page == "Log Water":
         if ds not in user["history"]:
             user["history"][ds] = {"total_ml": 0, "entries": []}
         
-        # FIX: Use proper datetime formatting with 12-hour format
+        # Use proper datetime formatting with 12-hour format
         now = datetime.now()
-        time_24hr = now.strftime("%H:%M:%S")  # 24-hour for storage
-        time_12hr = now.strftime("%I:%M %p")  # 12-hour for display
+        time_24hr = now.strftime("%H:%M:%S")
+        time_12hr = now.strftime("%I:%M %p")
         
         user["history"][ds]["entries"].append({
-            "time": time_24hr,  # Store in 24-hour format
-            "time_display": time_12hr,  # Store display format too
+            "time": time_24hr,
+            "time_display": time_12hr,
             "ml": int(amount),
-            "timestamp": now.isoformat()  # Full timestamp for sorting
+            "timestamp": now.isoformat()
         })
         user["history"][ds]["total_ml"] += int(amount)
         save_data(data)
+        st.session_state.data = data
         st.success(f"✅ Added {amount} ml at {time_12hr}!")
         st.balloons()
         st.rerun()
@@ -541,46 +563,31 @@ elif st.session_state.page == "Log Water":
         st.progress(min(progress_percentage / 100, 1.0))
         st.markdown(f"<h3 style='text-align:center;'>{today_total} ml / {daily_goal} ml</h3>", unsafe_allow_html=True)
 
-    # Show recent entries - FIX: Better time display with sorting
+    # Show recent entries
     st.markdown("---")
     st.markdown("### 📝 Today's Log History")
-    if today_str() in user["history"] and user["history"][today_str()]["entries"]:
+    if today_str() in user["history"] and user["history"][today_str()].get("entries"):
         entries = user["history"][today_str()]["entries"]
         
-        # Sort entries by timestamp if available, otherwise by time
+        # Sort entries by timestamp
         try:
             sorted_entries = sorted(entries, key=lambda x: x.get("timestamp", x.get("time", "")), reverse=True)
         except:
-            sorted_entries = entries[::-1]  # Just reverse if sorting fails
+            sorted_entries = entries[::-1]
         
         # Display last 10 entries
-        st.markdown("""
-        <style>
-        .log-entry {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 10px 15px;
-            margin: 5px 0;
-            border-radius: 10px;
-            border-left: 4px solid #00BFFF;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-        
         for entry in sorted_entries[:10]:
-            # Try to use display time first, fallback to converting 24hr time
-            if "time_display" in entry:
-                display_time = entry["time_display"]
-            else:
-                # Convert old format times to 12-hour format
+            display_time = entry.get("time_display", entry.get("time", ""))
+            if not display_time or ":" not in display_time:
                 try:
                     time_obj = datetime.strptime(entry['time'], "%H:%M:%S")
                     display_time = time_obj.strftime("%I:%M %p")
                 except:
-                    display_time = entry['time']
+                    display_time = entry.get('time', 'Unknown')
             
             st.markdown(f"""
                 <div class='log-entry'>
-                    🕒 <strong>{display_time}</strong> — <strong>{entry['ml']} ml</strong>
+                    🕒 <strong>{display_time}</strong> — <strong>{entry.get('ml', 0)} ml</strong>
                 </div>
             """, unsafe_allow_html=True)
     else:
@@ -595,19 +602,20 @@ elif st.session_state.page == "Challenges":
     st.markdown("### 🎯 Create a New Challenge")
     ch_name = st.text_input("Challenge name:", placeholder="e.g., Weekend Warrior, Week of Wellness")
     days = st.slider("Duration (days)", 1, 30, 7)
-    daily_goal = st.slider("Daily goal (litres)", 0.5, 5.0, 2.0, 0.25)
+    daily_goal_challenge = st.slider("Daily goal (litres)", 0.5, 5.0, 2.0, 0.25)
     
     if st.button("🚀 Create Challenge", type="primary"):
         if not ch_name.strip():
-            ch_name = f"{daily_goal}L for {days} days"
+            ch_name = f"{daily_goal_challenge}L for {days} days"
         user["challenges"].append({
             "name": ch_name,
             "days": days,
-            "goal": daily_goal,
+            "goal": daily_goal_challenge,
             "start": today_str(),
             "done": False
         })
         save_data(data)
+        st.session_state.data = data
         st.success(f"✅ Challenge '{ch_name}' created!")
         st.balloons()
         st.rerun()
@@ -631,6 +639,7 @@ elif st.session_state.page == "Challenges":
                         if badge_name not in user["badges"]:
                             user["badges"].append(badge_name)
                         save_data(data)
+                        st.session_state.data = data
                         st.success("🎉 Challenge completed!")
                         st.rerun()
     else:
@@ -650,20 +659,22 @@ elif st.session_state.page == "Badges":
         sorted_days = sorted(user["history"].keys())
         streak = 1
         longest_streak = 1
-        prev_date = datetime.strptime(sorted_days[0], "%Y-%m-%d").date()
+        
+        if len(sorted_days) > 0:
+            prev_date = datetime.strptime(sorted_days[0], "%Y-%m-%d").date()
 
-        for d in sorted_days[1:]:
-            curr_date = datetime.strptime(d, "%Y-%m-%d").date()
-            if (curr_date - prev_date).days == 1:
-                streak += 1
-                longest_streak = max(longest_streak, streak)
-            else:
-                streak = 1
-            prev_date = curr_date
+            for d in sorted_days[1:]:
+                curr_date = datetime.strptime(d, "%Y-%m-%d").date()
+                if (curr_date - prev_date).days == 1:
+                    streak += 1
+                    longest_streak = max(longest_streak, streak)
+                else:
+                    streak = 1
+                prev_date = curr_date
 
-        last_date = datetime.strptime(sorted_days[-1], "%Y-%m-%d").date()
-        if (today - last_date).days >= 2:
-            streak = 0
+            last_date = datetime.strptime(sorted_days[-1], "%Y-%m-%d").date()
+            if (today - last_date).days >= 2:
+                streak = 0
     else:
         streak = 0
         longest_streak = 0
@@ -766,6 +777,7 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
