@@ -254,11 +254,20 @@ if st.session_state.page == "Login":
     password = st.text_input("Password:", type="password")
 
     if mode == "Sign Up":
-        st.markdown("### 🎂 Tell us about yourself")
-
+        st.markdown("### YOUR AGE")
+        
+        # Initialize age in session state if not exists
         if "age" not in st.session_state:
             st.session_state.age = 18
 
+        # Number input for age
+        age_input = st.number_input("Age:", 1, 120, st.session_state.age, key="age_input")
+        
+        # Update session state if number input changes
+        if age_input != st.session_state.age:
+            st.session_state.age = age_input
+
+        # Age adjustment buttons
         col1, col2, col3 = st.columns([1, 2, 1])
         with col1:
             if st.button("➖") and st.session_state.age > 1:
@@ -271,12 +280,15 @@ if st.session_state.page == "Login":
                 st.session_state.age += 1
                 st.rerun()
 
+        # Calculate recommended goal based on age
         recommended_goal = calculate_daily_goal(st.session_state.age)
         st.info(f"💡 Recommended daily intake: {recommended_goal:.1f} L")
 
+        # Custom goal slider
         custom_goal = st.slider("Adjust your goal (L):", 0.5, 5.0, recommended_goal, 0.1)
         st.success(f"✅ Your daily goal is set to: **{custom_goal:.1f} litres** ({int(custom_goal * 1000)} ml)")
 
+        # Create Account button
         if st.button("Create Account 🚀"):
             if not name.strip() or not password.strip():
                 st.warning("⚠️ Please enter both username and password!")
@@ -724,6 +736,7 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
