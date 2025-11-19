@@ -691,7 +691,7 @@ elif st.session_state.page == "Challenges":
                 if not ch.get("done", False):
                     if st.button(f"Mark as Complete", key=f"complete_{idx}"):
                         user["challenges"][idx]["done"] = True
-                                                badge_name = f"✅ Completed: {ch['name']}"
+                        badge_name = f"✅ Completed: {ch['name']}"
                         if badge_name not in user["badges"]:
                             user["badges"].append(badge_name)
                         update_user_data(st.session_state.user, user)
@@ -925,4 +925,5 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
