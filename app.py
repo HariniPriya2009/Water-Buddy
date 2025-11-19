@@ -70,6 +70,29 @@ input, textarea, select {
     margin: 15px 0;
     backdrop-filter: blur(10px);
 }
+.reminder-popup {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+    color: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    z-index: 9999;
+    animation: slideIn 0.5s ease-out;
+    max-width: 350px;
+}
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
 </style>
 """
 st.markdown(page_bg, unsafe_allow_html=True)
@@ -98,6 +121,10 @@ if "page" not in st.session_state:
     st.session_state.page = "Login"
 if "user" not in st.session_state:
     st.session_state.user = None
+if "last_reminder_time" not in st.session_state:
+    st.session_state.last_reminder_time = None
+if "reminder_dismissed" not in st.session_state:
+    st.session_state.reminder_dismissed = False
 
 # ---------- AGE-BASED GOAL CALCULATOR (FEATURE 1) ----------
 def calculate_daily_goal(age, weight=None, activity_level="moderate"):
@@ -164,6 +191,75 @@ fun_facts = [
     "🌊 Water helps regulate body temperature and flush out toxins.",
     "🍉 Hydrating foods like watermelon, cucumber, and oranges help boost your intake!"
 ]
+
+# ---------- REMINDER MESSAGES ----------
+reminder_messages = [
+    "💧 Time to hydrate! Your body is calling for water!",
+    "🚰 Don't forget to drink water! Stay refreshed!",
+    "💦 Hydration check! Have you had water recently?",
+    "🌊 Your brain is 75% water — give it what it needs!",
+    "🥤 Quick reminder: Drink some water right now!",
+    "💧 Staying hydrated = Staying healthy! Drink up!",
+    "🔔 Ding ding! It's water o'clock!",
+    "🌟 Small sips lead to big wins! Drink water now!",
+    "💪 Keep your energy up! Time for some H2O!",
+    "🎯 Goal-getter! Don't forget your hydration goal today!"
+]
+
+# ---------- REMINDER LOGIC ----------
+def check_reminder(user):
+    """Check if it's time to show a reminder"""
+    settings = user.get("settings", {})
+    
+    # Check if reminders are enabled
+    if not settings.get("reminder_enabled", False):
+        return False
+    
+    # Get reminder settings
+    interval_minutes = settings.get("reminder_minutes", 120)
+    start_time_str = settings.get("reminder_start_time", "09:00")
+    
+    # Parse start time
+    try:
+        start_hour, start_minute = map(int, start_time_str.split(":"))
+        start_time = time(start_hour, start_minute)
+    except:
+        start_time = time(9, 0)
+    
+    now = datetime.now()
+    current_time = now.time()
+    
+    # Check if we're within active hours (start_time to 22:00)
+    end_time = time(22, 0)
+    if not (start_time <= current_time <= end_time):
+        return False
+    
+    # Check last reminder time
+    if st.session_state.last_reminder_time:
+        time_since_last = (now - st.session_state.last_reminder_time).total_seconds() / 60
+        if time_since_last < interval_minutes:
+            return False
+    
+    # Check if reminder was dismissed recently (within 5 minutes)
+    if st.session_state.reminder_dismissed:
+        return False
+    
+    return True
+
+def show_reminder():
+    """Display reminder popup"""
+    message = random.choice(reminder_messages)
+    
+    st.markdown(f"""
+        <div class='reminder-popup'>
+            <h3 style='margin:0 0 10px 0; color: white;'>🔔 Hydration Reminder</h3>
+            <p style='margin:0; font-size: 16px;'>{message}</p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    # Update last reminder time
+    st.session_state.last_reminder_time = datetime.now()
+    st.session_state.reminder_dismissed = False
 
 # ---------- MATPLOTLIB GRAPH FUNCTION ----------
 def plot_7day_intake(user):
@@ -233,9 +329,7 @@ def navbar():
     st.markdown("---")
 
 # ---------- USER MANAGEMENT ----------
-# FIX: Ensure user returns the user data AND saves to file
 def ensure_user(name, password=None):
-    # Reload data to get fresh copy
     data = load_data()
     
     if name not in data["users"]:
@@ -244,7 +338,7 @@ def ensure_user(name, password=None):
             "history": {},
             "badges": [],
             "challenges": [],
-            "daily_goal_ml": 2000,  # Default goal
+            "daily_goal_ml": 2000,
             "settings": {
                 "reminder_enabled": False,
                 "reminder_minutes": 120,
@@ -252,23 +346,33 @@ def ensure_user(name, password=None):
                 "theme": "light"
             }
         }
-        # FIX: Save immediately after creating new user
         save_data(data)
     
     return data["users"][name]
 
-# FIX: Helper function to get current user data
 def get_user_data(username):
     """Get fresh user data from file"""
     data = load_data()
     return data["users"].get(username, None)
 
-# FIX: Helper function to update user data
 def update_user_data(username, user_data):
     """Update user data and save to file"""
     data = load_data()
     data["users"][username] = user_data
     save_data(data)
+
+# ---------- CHECK AND SHOW REMINDER (For logged-in users) ----------
+if st.session_state.user and st.session_state.page != "Login":
+    user = get_user_data(st.session_state.user)
+    if user and check_reminder(user):
+        show_reminder()
+        
+        # Add dismiss button in sidebar
+        with st.sidebar:
+            if st.button("✅ Dismiss Reminder"):
+                st.session_state.reminder_dismissed = True
+                st.session_state.last_reminder_time = datetime.now()
+                st.rerun()
 
 # ---------- LOGIN / SIGN UP ----------
 if st.session_state.page == "Login":
@@ -284,10 +388,10 @@ if st.session_state.page == "Login":
     if mode == "Sign Up":
         st.markdown("### 🎂 Tell us about yourself")
         
-        # Age selector with plus and minus buttons (FEATURE 1 - Part 1)
+        # Age selector with plus and minus buttons
         st.write("**Select your age:**")
         if "age" not in st.session_state:
-            st.session_state.age = 25  # Default age
+            st.session_state.age = 25
         
         col1, col2, col3 = st.columns([1, 2, 1])
         with col1:
@@ -301,11 +405,11 @@ if st.session_state.page == "Login":
                 st.session_state.age += 1
                 st.rerun()
 
-        # Calculate and display recommended goal (FEATURE 1 - Part 2)
+        # Calculate and display recommended goal
         recommended_goal = calculate_daily_goal(st.session_state.age)
         st.info(f"💡 **Recommended daily water intake for your age:** {recommended_goal:.1f} litres")
         
-        # Allow user to adjust the goal (FEATURE 1 - Part 3)
+        # Allow user to adjust the goal
         st.write("**Adjust your daily goal (optional):**")
         custom_goal = st.slider(
             "Daily water goal (litres):", 
@@ -321,19 +425,16 @@ if st.session_state.page == "Login":
             if not name.strip() or not password.strip():
                 st.warning("⚠️ Please enter both username and password!")
             else:
-                # FIX: Check if user exists by reloading data
                 data = load_data()
                 if name in data["users"]:
                     st.error("❌ Username already exists! Try logging in instead.")
                 else:
-                    # FIX: Create new user with password
                     st.session_state.user = name.strip()
                     user = ensure_user(st.session_state.user, password)
                     user["profile"]["age"] = st.session_state.age
-                    user["profile"]["password"] = password  # FIX: Explicitly set password
+                    user["profile"]["password"] = password
                     user["daily_goal_ml"] = int(custom_goal * 1000)
                     
-                    # FIX: Save immediately after account creation
                     update_user_data(st.session_state.user, user)
                     
                     st.success(f"🎉 Welcome {name}! Your account has been created!")
@@ -343,7 +444,6 @@ if st.session_state.page == "Login":
 
     else:  # Login mode
         if st.button("Login 🔑"):
-            # FIX: Reload data to check credentials
             data = load_data()
             
             if name not in data["users"]:
@@ -359,7 +459,7 @@ if st.session_state.page == "Login":
 # ---------- DASHBOARD ----------
 elif st.session_state.page == "Dashboard":
     navbar()
-    user = get_user_data(st.session_state.user)  # FIX: Get fresh data
+    user = get_user_data(st.session_state.user)
     st.header(f"📊 Dashboard — {user['profile']['name']}")
     
     # Daily Hydration Tip
@@ -375,7 +475,7 @@ elif st.session_state.page == "Dashboard":
 
     st.markdown(f"### {get_motivational_message(progress_percentage)}")
     
-    # Animated water bottle visualization (FEATURE 3)
+    # Animated water bottle visualization
     bottle_fill_percentage = min(progress_percentage, 100)
     st.markdown(f"""
         <div style="text-align: center;">
@@ -431,7 +531,7 @@ elif st.session_state.page == "Dashboard":
     st.pyplot(fig)
     plt.close()
 
-    # FEATURE 5: Reset button for today
+    # Reset button for today
     st.markdown("---")
     st.subheader("🔄 Reset Today's Progress")
     st.warning("⚠️ This will clear all water intake logged for today. Use this if you made a mistake or want to start fresh.")
@@ -442,7 +542,7 @@ elif st.session_state.page == "Dashboard":
             today = today_str()
             if today in user["history"]:
                 user["history"][today] = {"total_ml": 0, "entries": []}
-                update_user_data(st.session_state.user, user)  # FIX: Use update function
+                update_user_data(st.session_state.user, user)
                 st.success("✅ Today's progress has been reset!")
                 st.rerun()
             else:
@@ -451,7 +551,7 @@ elif st.session_state.page == "Dashboard":
 # ---------- LOG WATER ----------
 elif st.session_state.page == "Log Water":
     navbar()
-    user = get_user_data(st.session_state.user)  # FIX: Get fresh data
+    user = get_user_data(st.session_state.user)
     st.header("💧 Log Water Intake")
 
     # Get today's data
@@ -459,7 +559,7 @@ elif st.session_state.page == "Log Water":
     daily_goal = user.get("daily_goal_ml", 2000)
     progress_percentage = (today_total / daily_goal) * 100
 
-    # FEATURE 2: Quick log buttons for common amounts
+    # Quick log buttons for common amounts
     st.markdown("### ⚡ Quick Log (Tap to Add)")
     col1, col2, col3, col4, col5 = st.columns(5)
     
@@ -486,17 +586,17 @@ elif st.session_state.page == "Log Water":
         tnow = datetime.now().strftime("%H:%M:%S")
         user["history"][ds]["entries"].append({"time": tnow, "ml": int(amount)})
         user["history"][ds]["total_ml"] += int(amount)
-        update_user_data(st.session_state.user, user)  # FIX: Use update function
+        update_user_data(st.session_state.user, user)
         st.success(f"✅ Added {amount} ml at {tnow}!")
         st.balloons()
         st.rerun()
 
     st.markdown("---")
 
-    # FEATURE 3: Real-time visual feedback
+    # Real-time visual feedback
     st.markdown("### 📊 Today's Progress")
     
-    # Mascot image based on progress (FEATURE 4)
+    # Mascot image based on progress
     mascot_path = get_mascot_image(progress_percentage)
     motivational_msg = get_motivational_message(progress_percentage)
     
@@ -545,7 +645,7 @@ elif st.session_state.page == "Log Water":
     st.markdown("### 📝 Today's Log History")
     if today_str() in user["history"] and user["history"][today_str()]["entries"]:
         entries = user["history"][today_str()]["entries"]
-        for idx, entry in enumerate(reversed(entries[-10:]), 1):  # Show last 10
+        for idx, entry in enumerate(reversed(entries[-10:]), 1):
             st.text(f"🕒 {entry['time']} — {entry['ml']} ml")
     else:
         st.info("No water logged yet today. Start now!")
@@ -553,7 +653,7 @@ elif st.session_state.page == "Log Water":
 # ---------- CHALLENGES ----------
 elif st.session_state.page == "Challenges":
     navbar()
-    user = get_user_data(st.session_state.user)  # FIX: Get fresh data
+    user = get_user_data(st.session_state.user)
     st.header("🏁 Hydration Challenges")
 
     st.markdown("### 🎯 Create a New Challenge")
@@ -571,7 +671,7 @@ elif st.session_state.page == "Challenges":
             "start": today_str(),
             "done": False
         })
-        update_user_data(st.session_state.user, user)  # FIX: Use update function
+        update_user_data(st.session_state.user, user)
         st.success(f"✅ Challenge '{ch_name}' created!")
         st.balloons()
         st.rerun()
@@ -591,10 +691,10 @@ elif st.session_state.page == "Challenges":
                 if not ch.get("done", False):
                     if st.button(f"Mark as Complete", key=f"complete_{idx}"):
                         user["challenges"][idx]["done"] = True
-                        badge_name = f"✅ Completed: {ch['name']}"
+                                                badge_name = f"✅ Completed: {ch['name']}"
                         if badge_name not in user["badges"]:
                             user["badges"].append(badge_name)
-                        update_user_data(st.session_state.user, user)  # FIX: Use update function
+                        update_user_data(st.session_state.user, user)
                         st.success("🎉 Challenge completed!")
                         st.rerun()
     else:
@@ -603,7 +703,7 @@ elif st.session_state.page == "Challenges":
 # ---------- BADGES ----------
 elif st.session_state.page == "Badges":
     navbar()
-    user = get_user_data(st.session_state.user)  # FIX: Get fresh data
+    user = get_user_data(st.session_state.user)
 
     st.markdown("<h2 style='color:#FFD166;'>🏅 Your Badges & Achievements</h2>", unsafe_allow_html=True)
     
@@ -647,7 +747,7 @@ elif st.session_state.page == "Badges":
 
     st.markdown("---")
 
-      # Badge earning logic
+    # Badge earning logic
     badges_earned = []
     total_drinks = sum(len(day.get("entries", [])) for day in user["history"].values())
     
@@ -693,14 +793,14 @@ elif st.session_state.page == "Badges":
             st.success(badge)
         st.balloons()
 
-    save_data(data)  # FIX 3: Save after badge updates
+    # Save badge updates
+    update_user_data(st.session_state.user, user)
 
 # ---------- SETTINGS PAGE ----------
 elif st.session_state.page == "Settings":
-    navbar()  # Use the navbar function you already have
+    navbar()
     st.markdown("<h2 style='color:#FFD166;'>⚙️ Settings</h2>", unsafe_allow_html=True)
 
-    # FIX: Get fresh user data
     user = get_user_data(st.session_state.user)
     profile = user.get("profile", {})
 
@@ -724,39 +824,69 @@ elif st.session_state.page == "Settings":
     
     if st.button("💾 Update Goal", type="primary"):
         user["daily_goal_ml"] = int(new_goal * 1000)
-        update_user_data(st.session_state.user, user)  # FIX: Use update function
+        update_user_data(st.session_state.user, user)
         st.success(f"✅ Goal updated successfully to {new_goal:.1f} L!")
-        st.rerun()  # FIX: Reload to show changes
+        st.rerun()
 
     st.markdown("---")
 
     # --- Reminder Settings ---
     st.subheader("🔔 Reminder Settings")
+    st.info("💡 Enable reminders to get periodic notifications to drink water throughout the day!")
+    
     rem_enabled = st.checkbox(
-        "Enable in-app reminders ",
-        value=user.get("settings", {}).get("reminder_enabled", False)
+        "Enable in-app reminders",
+        value=user.get("settings", {}).get("reminder_enabled", False),
+        help="Show reminder popups to drink water"
     )
+    
     rem_minutes = st.number_input(
         "Reminder interval (minutes):",
         min_value=15, 
         max_value=720,
         value=user.get("settings", {}).get("reminder_minutes", 120),
-        step=15
+        step=15,
+        help="How often you want to be reminded"
     )
+    
     rem_start = st.time_input(
         "Start reminders at:",
-        value=time.fromisoformat(user.get("settings", {}).get("reminder_start_time", "09:00"))
+        value=time.fromisoformat(user.get("settings", {}).get("reminder_start_time", "09:00")),
+        help="Reminders will start at this time and end at 10 PM"
     )
+    
+    st.info(f"⏰ You will receive reminders every {rem_minutes} minutes between {rem_start.strftime('%I:%M %p')} and 10:00 PM")
 
-    if st.button("💾 Save Reminder Settings"):
+    if st.button("💾 Save Reminder Settings", type="primary"):
         if "settings" not in user:
             user["settings"] = {}
         user["settings"]["reminder_enabled"] = rem_enabled
         user["settings"]["reminder_minutes"] = int(rem_minutes)
         user["settings"]["reminder_start_time"] = rem_start.strftime("%H:%M")
-        update_user_data(st.session_state.user, user)  # FIX: Use update function
+        update_user_data(st.session_state.user, user)
+        
+        # Reset reminder state to apply new settings
+        st.session_state.last_reminder_time = None
+        st.session_state.reminder_dismissed = False
+        
         st.success("✅ Reminder settings saved!")
+        if rem_enabled:
+            st.info("🔔 Reminders are now active! You'll see notifications on your Dashboard and other pages.")
         st.rerun()
+
+    st.markdown("---")
+
+    # --- Test Reminder ---
+    if rem_enabled:
+        st.subheader("🧪 Test Reminder")
+        st.write("Click the button below to see how a reminder looks:")
+        if st.button("👀 Show Test Reminder"):
+            st.markdown(f"""
+                <div class='reminder-popup'>
+                    <h3 style='margin:0 0 10px 0; color: white;'>🔔 Hydration Reminder (TEST)</h3>
+                    <p style='margin:0; font-size: 16px;'>{random.choice(reminder_messages)}</p>
+                </div>
+            """, unsafe_allow_html=True)
 
     st.markdown("---")
 
@@ -765,6 +895,8 @@ elif st.session_state.page == "Settings":
     if st.button("Logout", type="secondary"):
         st.session_state.user = None
         st.session_state.page = "Login"
+        st.session_state.last_reminder_time = None
+        st.session_state.reminder_dismissed = False
         st.success("✅ Logged out successfully!")
         st.rerun()
 
@@ -778,12 +910,14 @@ elif st.session_state.page == "Settings":
 
     if st.button("❌ Delete All Data", type="primary"):
         if RC:
-            data = load_data()  # FIX: Load fresh data
+            data = load_data()
             if st.session_state.user in data["users"]:
                 del data["users"][st.session_state.user]
                 save_data(data)
                 st.session_state.user = None
                 st.session_state.page = "Login"
+                st.session_state.last_reminder_time = None
+                st.session_state.reminder_dismissed = False
                 st.success("✅ All your data has been deleted.")
                 st.rerun()
         else:
@@ -791,6 +925,4 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
-
-
 
