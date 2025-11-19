@@ -551,55 +551,131 @@ elif st.session_state.page == "Dashboard":
 # ---------- LOG WATER ----------
 elif st.session_state.page == "Log Water":
     navbar()
-    user = get_user_data(st.session_state.user)  # FIX: Get fresh data
+    user = get_user_data(st.session_state.user)  # Get fresh user data
     st.header("💧 Log Water Intake")
 
-    # Get today's data
+    # ---------- Helper Functions ----------
+    def log_entry(amount_ml):
+        """Add a water log entry with proper timestamp."""
+        ds = today_str()
+        if ds not in user["history"]:
+            user["history"][ds] = {"total_ml": 0, "entries": []}
+
+        now = datetime.now()
+        entry = {
+            "timestamp": now.isoformat(),  # full ISO timestamp
+            "ml": int(amount_ml)
+        }
+
+        user["history"][ds]["entries"].append(entry)
+        user["history"][ds]["total_ml"] += int(amount_ml)
+        update_user_data(st.session_state.user, user)
+        st.success(f"✅ Added {amount_ml} ml at {now.strftime('%I:%M %p')}!")
+        st.balloons()
+        st.rerun()
+
+    # ---------- Quick Log Buttons ----------
+    st.markdown("### ⚡ Quick Log (Tap to Add)")
+    col1, col2, col3, col4, col5 = st.columns(5)
+    quick_amounts = [100, 200, 250, 330, 500]
+
+    if col1.button(f"💧 {quick_amounts[0]} ml", use_container_width=True): log_entry(quick_amounts[0])
+    if col2.button(f"💧 {quick_amounts[1]} ml", use_container_width=True): log_entry(quick_amounts[1])
+    if col3.button(f"💧 {quick_amounts[2]} ml", use_container_width=True): log_entry(quick_amounts[2])
+    if col4.button(f"💧 {quick_amounts[3]} ml", use_container_width=True): log_entry(quick_amounts[3])
+    if col5.button(f"💧 {quick_amounts[4]} ml", use_container_width=True): log_entry(quick_amounts[4])
+
+    # ---------- Custom Amount ----------
+    st.markdown("### 🎯 Custom Amount")
+    custom = st.number_input("Enter custom amount (ml):", min_value=50, max_value=2000, value=250, step=50)
+    if st.button("➕ Add Custom Amount", type="primary", use_container_width=True):
+        log_entry(custom)
+
+    # ---------- Today's Progress ----------
     today_total = user["history"].get(today_str(), {}).get("total_ml", 0)
     daily_goal = user.get("daily_goal_ml", 2000)
     progress_percentage = (today_total / daily_goal) * 100
 
-    # FEATURE 2: Quick log buttons for common amounts
-    st.markdown("### ⚡ Quick Log (Tap to Add)")
-    col1, col2, col3, col4, col5 = st.columns(5)
-    
-    quick_amounts = [100, 200, 250, 330, 500]
-    amount = None
-    
-    if col1.button(f"💧 {quick_amounts[0]} ml", use_container_width=True): amount = quick_amounts[0]
-    if col2.button(f"💧 {quick_amounts[1]} ml", use_container_width=True): amount = quick_amounts[1]
-    if col3.button(f"💧 {quick_amounts[2]} ml", use_container_width=True): amount = quick_amounts[2]
-    if col4.button(f"💧 {quick_amounts[3]} ml", use_container_width=True): amount = quick_amounts[3]
-    if col5.button(f"💧 {quick_amounts[4]} ml", use_container_width=True): amount = quick_amounts[4]
+    st.markdown("---")
+    st.markdown("### 📊 Today's Progress")
 
-    st.markdown("### 🎯 Custom Amount")
-    custom = st.number_input("Enter custom amount (ml):", min_value=50, max_value=2000, value=250, step=50)
-    
-    if st.button("➕ Add Custom Amount", type="primary", use_container_width=True):
-        amount = custom
+    # Mascot & motivational message
+    mascot_path = get_mascot_image(progress_percentage)
+    motivational_msg = get_motivational_message(progress_percentage)
 
-    # Process the logged water
-    if amount:
-        ds = today_str()
-        if ds not in user["history"]:
-            user["history"][ds] = {"total_ml": 0, "entries": []}
-        
-        # FIX: Use proper datetime formatting with 12-hour format
-        now = datetime.now()
-        time_24hr = now.strftime("%H:%M:%S")  # 24-hour for storage
-        time_12hr = now.strftime("%I:%M %p")  # 12-hour for display
-        
-        user["history"][ds]["entries"].append({
-            "time": time_24hr,  # Store in 24-hour format
-            "time_display": time_12hr,  # Store display format too
-            "ml": int(amount),
-            "timestamp": now.isoformat()  # Full timestamp for sorting
-        })
-        user["history"][ds]["total_ml"] += int(amount)
-        update_user_data(st.session_state.user, user)
-        st.success(f"✅ Added {amount} ml at {time_12hr}!")
-        st.balloons()
-        st.rerun()
+    col_mascot, col_progress = st.columns([1, 2])
+    with col_mascot:
+        if os.path.exists(mascot_path):
+            st.image(mascot_path, width=200)
+        st.markdown(f"**{motivational_msg}**")
+
+    with col_progress:
+        bottle_fill = min(progress_percentage, 100)
+        st.markdown(f"""
+            <div style="text-align: center;">
+                <div style="
+                    width: 120px;
+                    height: 240px;
+                    border: 3px solid #ffffff;
+                    border-radius: 15px 15px 30px 30px;
+                    position: relative;
+                    margin: 10px auto;
+                    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+                    background: linear-gradient(to top, #00BFFF {bottle_fill}%, transparent {bottle_fill}%);
+                ">
+                    <div style="
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        font-size: 20px;
+                        font-weight: bold;
+                        color: {'#ffffff' if bottle_fill > 50 else '#000000'};
+                    ">
+                        {progress_percentage:.0f}%
+                    </div>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+
+        st.progress(min(progress_percentage / 100, 1.0))
+        st.markdown(f"<h3 style='text-align:center;'>{today_total} ml / {daily_goal} ml</h3>", unsafe_allow_html=True)
+
+    # ---------- Today's Log History ----------
+    st.markdown("---")
+    st.markdown("### 📝 Today's Log History")
+    entries = user.get("history", {}).get(today_str(), {}).get("entries", [])
+
+    if entries:
+        # Sort by timestamp descending
+        sorted_entries = sorted(entries, key=lambda x: x.get("timestamp", ""), reverse=True)
+
+        st.markdown("""
+        <style>
+        .log-entry {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            margin: 5px 0;
+            border-radius: 10px;
+            border-left: 4px solid #00BFFF;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+        for entry in sorted_entries[:10]:
+            try:
+                dt = datetime.fromisoformat(entry["timestamp"])
+                display_time = dt.strftime("%I:%M %p")
+            except:
+                display_time = "Unknown"
+
+            st.markdown(f"""
+                <div class='log-entry'>
+                    🕒 <strong>{display_time}</strong> — <strong>{entry['ml']} ml</strong>
+                </div>
+            """, unsafe_allow_html=True)
+    else:
+        st.info("No water logged yet today. Start now!")
 
     st.markdown("---")
 
@@ -971,6 +1047,7 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
