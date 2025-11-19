@@ -697,37 +697,99 @@ elif st.session_state.page == "Badges":
 
 # ---------- SETTINGS PAGE ----------
 elif st.session_state.page == "Settings":
-    navbar_pages = ["Dashboard", "Log Water", "Challenges", "Badges", "Settings"]
-    cols = st.columns(len(navbar_pages))
-    for i, p in enumerate(navbar_pages):
-        if cols[i].button(p):
-            st.session_state.page = p
-            st.rerun()
-    st.markdown("---")
+    navbar()  # Use the navbar function you already have
+    st.markdown("<h2 style='color:#FFD166;'>⚙️ Settings</h2>", unsafe_allow_html=True)
 
-    st.markdown("<h2>⚙️ Settings</h2>", unsafe_allow_html=True)
-    user = ensure_user(st.session_state.user)
+    # FIX: Get fresh user data
+    user = get_user_data(st.session_state.user)
     profile = user.get("profile", {})
 
+    # --- User Info Section ---
     st.subheader("👤 User Information")
-    st.markdown(f"**Username:** {profile.get('name', 'Unknown')}")
+    st.markdown(f"**Username:** {profile.get('name', st.session_state.user)}")
     st.markdown(f"**Age:** {profile.get('age', 'Not provided')} years")
     st.markdown(f"**Daily Goal:** {user.get('daily_goal_ml', 2000)/1000:.1f} L")
 
-    new_goal = st.number_input("Update goal (L):", 0.5, 10.0, user["daily_goal_ml"]/1000, 0.1)
-    if st.button("💾 Update Goal"):
+    st.markdown("---")
+    
+    # --- Update Goal Section ---
+    st.subheader("🎯 Update Daily Goal")
+    new_goal = st.number_input(
+        "Update your daily water goal (litres):",
+        min_value=0.5,
+        max_value=10.0,
+        value=user.get("daily_goal_ml", 2000)/1000,
+        step=0.1
+    )
+    
+    if st.button("💾 Update Goal", type="primary"):
         user["daily_goal_ml"] = int(new_goal * 1000)
-        save_data(data)
-        st.success("✅ Goal updated successfully!")
+        update_user_data(st.session_state.user, user)  # FIX: Use update function
+        st.success(f"✅ Goal updated successfully to {new_goal:.1f} L!")
+        st.rerun()  # FIX: Reload to show changes
 
     st.markdown("---")
+
+    # --- Reminder Settings ---
+    st.subheader("🔔 Reminder Settings")
+    rem_enabled = st.checkbox(
+        "Enable in-app reminders (works while app is open)",
+        value=user.get("settings", {}).get("reminder_enabled", False)
+    )
+    rem_minutes = st.number_input(
+        "Reminder interval (minutes):",
+        min_value=15, 
+        max_value=720,
+        value=user.get("settings", {}).get("reminder_minutes", 120),
+        step=15
+    )
+    rem_start = st.time_input(
+        "Start reminders at:",
+        value=time.fromisoformat(user.get("settings", {}).get("reminder_start_time", "09:00"))
+    )
+
+    if st.button("💾 Save Reminder Settings"):
+        if "settings" not in user:
+            user["settings"] = {}
+        user["settings"]["reminder_enabled"] = rem_enabled
+        user["settings"]["reminder_minutes"] = int(rem_minutes)
+        user["settings"]["reminder_start_time"] = rem_start.strftime("%H:%M")
+        update_user_data(st.session_state.user, user)  # FIX: Use update function
+        st.success("✅ Reminder settings saved!")
+        st.rerun()
+
+    st.markdown("---")
+
+    # --- Logout Section ---
     st.subheader("🚪 Logout")
-    if st.button("Logout"):
+    if st.button("Logout", type="secondary"):
         st.session_state.user = None
         st.session_state.page = "Login"
-        st.success("Logged out successfully!")
+        st.success("✅ Logged out successfully!")
         st.rerun()
+
+    st.markdown("---")
+
+    # --- Reset All Data ---
+    st.subheader("🗑️ Reset All Data")
+    st.warning("⚠️ **WARNING:** This will permanently delete all your logs, badges, challenges, and progress. This action cannot be undone!")
+
+    RC = st.checkbox("I confirm I want to delete all my data.", key="confirm_delete")
+
+    if st.button("❌ Delete All Data", type="primary"):
+        if RC:
+            data = load_data()  # FIX: Load fresh data
+            if st.session_state.user in data["users"]:
+                del data["users"][st.session_state.user]
+                save_data(data)
+                st.session_state.user = None
+                st.session_state.page = "Login"
+                st.success("✅ All your data has been deleted.")
+                st.rerun()
+        else:
+            st.warning("⚠️ Please confirm before deleting your data.")
 
 # ---------- SAVE ----------
 save_data(data)
+
 
