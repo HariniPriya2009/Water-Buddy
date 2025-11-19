@@ -733,7 +733,7 @@ elif st.session_state.page == "Settings":
     # --- Reminder Settings ---
     st.subheader("🔔 Reminder Settings")
     rem_enabled = st.checkbox(
-        "Enable in-app reminders (works while app is open)",
+        "Enable in-app reminders ",
         value=user.get("settings", {}).get("reminder_enabled", False)
     )
     rem_minutes = st.number_input(
@@ -791,5 +791,6 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
