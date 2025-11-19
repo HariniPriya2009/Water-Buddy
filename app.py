@@ -76,29 +76,6 @@ input, textarea, select {
     margin: 5px 0;
     border-radius: 10px;
     border-left: 4px solid #00BFFF;
-.reminder-popup {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: linear-gradient(135deg, #FF6B6B, #FFE66D);
-    padding: 20px 30px;
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    z-index: 9999;
-    animation: slideIn 0.5s ease-out;
-    max-width: 350px;
-}
-@keyframes slideIn {
-    from {
-        transform: translateX(400px);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
 }
 </style>
 """
@@ -133,12 +110,6 @@ if "user" not in st.session_state:
     st.session_state.user = None
 if "age" not in st.session_state:
     st.session_state.age = 18
-if "show_reminder" not in st.session_state:
-    st.session_state.show_reminder = False
-if "last_reminder_time" not in st.session_state:
-    st.session_state.last_reminder_time = None
-if "reminder_dismissed_today" not in st.session_state:
-    st.session_state.reminder_dismissed_today = []
 
 # ---------- LOAD DATA ONCE ----------
 if "data" not in st.session_state:
@@ -163,115 +134,7 @@ def calculate_daily_goal(age, weight=None, activity_level="moderate"):
         return 2.8  
     else:
         return 2.5  
-# ---------- REMINDER SYSTEM ----------
-def check_reminder(user):
-    """Check if reminder should be shown"""
-    settings = user.get("settings", {})
-    
-    if not settings.get("reminder_enabled", False):
-        return False
-    
-    now = datetime.now()
-    today_key = now.strftime("%Y-%m-%d")
-    
-    # Reset dismissed list daily
-    if st.session_state.reminder_dismissed_today and \
-       st.session_state.reminder_dismissed_today[0] != today_key:
-        st.session_state.reminder_dismissed_today = []
-    
-    # Check if already dismissed recently
-    current_time_key = now.strftime("%Y-%m-%d %H:%M")
-    if current_time_key in st.session_state.reminder_dismissed_today:
-        return False
-    
-    # Get reminder settings
-    reminder_interval = settings.get("reminder_minutes", 120)
-    start_time_str = settings.get("reminder_start_time", "09:00")
-    end_time_str = settings.get("reminder_end_time", "22:00")
-    
-    # Parse times
-    try:
-        start_time = datetime.strptime(start_time_str, "%H:%M").time()
-        end_time = datetime.strptime(end_time_str, "%H:%M").time()
-    except:
-        start_time = datetime.strptime("09:00", "%H:%M").time()
-        end_time = datetime.strptime("22:00", "%H:%M").time()
-    
-    current_time = now.time()
-    
-    # Check if within active hours
-    if not (start_time <= current_time <= end_time):
-        return False
-    
-    # Check last reminder time
-    if st.session_state.last_reminder_time:
-        try:
-            last_reminder = datetime.fromisoformat(st.session_state.last_reminder_time)
-            time_diff = (now - last_reminder).total_seconds() / 60
-            
-            if time_diff < reminder_interval:
-                return False
-        except:
-            pass
-    
-    # Check if goal not met
-    today_total = user["history"].get(today_str(), {}).get("total_ml", 0)
-    daily_goal = user.get("daily_goal_ml", 2000)
-    
-    if today_total >= daily_goal:
-        return False
-    
-    return True
 
-def show_reminder_popup(user):
-    """Display reminder popup"""
-    today_total = user["history"].get(today_str(), {}).get("total_ml", 0)
-    daily_goal = user.get("daily_goal_ml", 2000)
-    remaining = daily_goal - today_total
-    
-    reminder_messages = [
-        "💧 Time to hydrate! Your body needs water!",
-        "🌊 Don't forget to drink water!",
-        "💦 Stay hydrated, stay healthy!",
-        "🥤 A glass of water keeps the doctor away!",
-        "🌟 You're doing great! Keep drinking!",
-        "🏃‍♀️ Hydration = Better performance!",
-        "🧠 Water boosts your brain power!",
-        "😊 Drink up and feel refreshed!"
-    ]
-    
-    st.markdown(f"""
-        <div class='reminder-popup' id='reminderPopup'>
-            <div style='text-align: center;'>
-                <h2 style='margin: 0; color: #333;'>💧 Hydration Reminder!</h2>
-                <p style='font-size: 16px; color: #333; margin: 10px 0;'>
-                    {random.choice(reminder_messages)}
-                </p>
-                <div style='background: white; padding: 10px; border-radius: 10px; margin: 10px 0;'>
-                    <p style='margin: 5px 0; color: #333; font-weight: bold;'>
-                        Today: {today_total} ml / {daily_goal} ml
-                    </p>
-                    <p style='margin: 5px 0; color: #FF6B6B; font-weight: bold;'>
-                        Remaining: {remaining} ml
-                    </p>
-                </div>
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
-
-def dismiss_reminder():
-    """Dismiss current reminder"""
-    now = datetime.now()
-    current_time_key = now.strftime("%Y-%m-%d %H:%M")
-    today_key = now.strftime("%Y-%m-%d")
-    
-    if not st.session_state.reminder_dismissed_today or \
-       st.session_state.reminder_dismissed_today[0] != today_key:
-        st.session_state.reminder_dismissed_today = [today_key]
-    
-    st.session_state.reminder_dismissed_today.append(current_time_key)
-    st.session_state.last_reminder_time = now.isoformat()
-    st.session_state.show_reminder = False
 # ---------- MOTIVATIONAL MESSAGES (FEATURE 4) ----------
 def get_motivational_message(percentage):
     """Return motivational message based on progress percentage"""
@@ -498,22 +361,6 @@ if st.session_state.page == "Login":
                 st.success(f"✅ Welcome back, {name}!")
                 st.session_state.page = "Dashboard"
                 st.rerun()
-# ---------- CHECK REMINDER (For logged in users) ----------
-if st.session_state.user and st.session_state.page != "Login":
-    user = ensure_user(st.session_state.user)
-    
-    if check_reminder(user):
-        st.session_state.show_reminder = True
-    
-    if st.session_state.show_reminder:
-        show_reminder_popup(user)
-        
-        col_dismiss = st.columns([4, 1])
-        with col_dismiss[1]:
-            if st.button("❌ Dismiss", key="dismiss_reminder"):
-                dismiss_reminder()
-                st.rerun()
-
 
 # ---------- DASHBOARD ----------
 elif st.session_state.page == "Dashboard":
@@ -847,7 +694,7 @@ elif st.session_state.page == "Badges":
 
     st.markdown("---")
 
-    # Badge earning logic
+      # Badge earning logic
     badges_earned = []
     total_drinks = sum(len(day.get("entries", [])) for day in user["history"].values())
     
@@ -921,65 +768,7 @@ elif st.session_state.page == "Settings":
         st.success("✅ Goal updated successfully!")
 
     st.markdown("---")
-
-    # ✅ NEW: REMINDER SETTINGS
-    st.subheader("🔔 Reminder Settings")
-    
-    settings = user.get("settings", {})
-    
-    reminder_enabled = st.toggle(
-        "Enable Hydration Reminders",
-        value=settings.get("reminder_enabled", True),
-        help="Get periodic reminders to drink water throughout the day"
-    )
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        reminder_minutes = st.selectbox(
-            "Reminder Interval",
-            options=[30, 60, 90, 120, 180, 240],
-            index=[30, 60, 90, 120, 180, 240].index(settings.get("reminder_minutes", 120)),
-            format_func=lambda x: f"Every {x} minutes" if x < 60 else f"Every {x//60} hour{'s' if x > 60 else ''}",
-            help="How often you want to be reminded"
-        )
-    
-    with col2:
-        start_time = st.time_input(
-            "Start Time",
-            value=datetime.strptime(settings.get("reminder_start_time", "09:00"), "%H:%M").time(),
-            help="When reminders should start"
-        )
-    
-    end_time = st.time_input(
-        "End Time",
-        value=datetime.strptime(settings.get("reminder_end_time", "22:00"), "%H:%M").time(),
-        help="When reminders should stop"
-    )
-    
-    if st.button("💾 Save Reminder Settings", type="primary"):
-        user["settings"] = {
-            "reminder_enabled": reminder_enabled,
-            "reminder_minutes": reminder_minutes,
-            "reminder_start_time": start_time.strftime("%H:%M"),
-            "reminder_end_time": end_time.strftime("%H:%M")
-        }
-        save_data(data)
-        st.session_state.data = data
-        st.success("✅ Reminder settings saved!")
-        
-        # Reset reminder state
-        st.session_state.last_reminder_time = None
-        st.session_state.reminder_dismissed_today = []
-        st.rerun()
-    
-    # Show current settings
-    if reminder_enabled:
-        st.info(f"🔔 Reminders are **enabled** from **{settings.get('reminder_start_time', '09:00')}** to **{settings.get('reminder_end_time', '22:00')}** every **{reminder_minutes} minutes**")
-    else:
-        st.warning("🔕 Reminders are currently **disabled**")
-        
     st.subheader("🚪 Logout")
-    
     if st.button("Logout"):
         st.session_state.user = None
         st.session_state.page = "Login"
@@ -988,14 +777,3 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
-
-
-
-
-
-
-
-
-
-
-
