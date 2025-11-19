@@ -551,7 +551,7 @@ elif st.session_state.page == "Dashboard":
 # ---------- LOG WATER ----------
 elif st.session_state.page == "Log Water":
     navbar()
-    user = get_user_data(st.session_state.user)
+    user = get_user_data(st.session_state.user)  # FIX: Get fresh data
     st.header("💧 Log Water Intake")
 
     # Get today's data
@@ -559,7 +559,7 @@ elif st.session_state.page == "Log Water":
     daily_goal = user.get("daily_goal_ml", 2000)
     progress_percentage = (today_total / daily_goal) * 100
 
-    # Quick log buttons for common amounts
+    # FEATURE 2: Quick log buttons for common amounts
     st.markdown("### ⚡ Quick Log (Tap to Add)")
     col1, col2, col3, col4, col5 = st.columns(5)
     
@@ -583,20 +583,30 @@ elif st.session_state.page == "Log Water":
         ds = today_str()
         if ds not in user["history"]:
             user["history"][ds] = {"total_ml": 0, "entries": []}
-        tnow = datetime.now().strftime("%H:%M:%S")
-        user["history"][ds]["entries"].append({"time": tnow, "ml": int(amount)})
+        
+        # FIX: Use proper datetime formatting with 12-hour format
+        now = datetime.now()
+        time_24hr = now.strftime("%H:%M:%S")  # 24-hour for storage
+        time_12hr = now.strftime("%I:%M %p")  # 12-hour for display
+        
+        user["history"][ds]["entries"].append({
+            "time": time_24hr,  # Store in 24-hour format
+            "time_display": time_12hr,  # Store display format too
+            "ml": int(amount),
+            "timestamp": now.isoformat()  # Full timestamp for sorting
+        })
         user["history"][ds]["total_ml"] += int(amount)
         update_user_data(st.session_state.user, user)
-        st.success(f"✅ Added {amount} ml at {tnow}!")
+        st.success(f"✅ Added {amount} ml at {time_12hr}!")
         st.balloons()
         st.rerun()
 
     st.markdown("---")
 
-    # Real-time visual feedback
+    # FEATURE 3: Real-time visual feedback
     st.markdown("### 📊 Today's Progress")
     
-    # Mascot image based on progress
+    # Mascot image based on progress (FEATURE 4)
     mascot_path = get_mascot_image(progress_percentage)
     motivational_msg = get_motivational_message(progress_percentage)
     
@@ -640,15 +650,51 @@ elif st.session_state.page == "Log Water":
         st.progress(min(progress_percentage / 100, 1.0))
         st.markdown(f"<h3 style='text-align:center;'>{today_total} ml / {daily_goal} ml</h3>", unsafe_allow_html=True)
 
-    # Show recent entries
+    # Show recent entries - FIX: Better time display with sorting
     st.markdown("---")
     st.markdown("### 📝 Today's Log History")
     if today_str() in user["history"] and user["history"][today_str()]["entries"]:
         entries = user["history"][today_str()]["entries"]
-        for idx, entry in enumerate(reversed(entries[-10:]), 1):
-            st.text(f"🕒 {entry['time']} — {entry['ml']} ml")
+        
+        # Sort entries by timestamp if available, otherwise by time
+        try:
+            sorted_entries = sorted(entries, key=lambda x: x.get("timestamp", x.get("time", "")), reverse=True)
+        except:
+            sorted_entries = entries[::-1]  # Just reverse if sorting fails
+        
+        # Display last 10 entries
+        st.markdown("""
+        <style>
+        .log-entry {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            margin: 5px 0;
+            border-radius: 10px;
+            border-left: 4px solid #00BFFF;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        for entry in sorted_entries[:10]:
+            # Try to use display time first, fallback to converting 24hr time
+            if "time_display" in entry:
+                display_time = entry["time_display"]
+            else:
+                # Convert old format times to 12-hour format
+                try:
+                    time_obj = datetime.strptime(entry['time'], "%H:%M:%S")
+                    display_time = time_obj.strftime("%I:%M %p")
+                except:
+                    display_time = entry['time']
+            
+            st.markdown(f"""
+                <div class='log-entry'>
+                    🕒 <strong>{display_time}</strong> — <strong>{entry['ml']} ml</strong>
+                </div>
+            """, unsafe_allow_html=True)
     else:
         st.info("No water logged yet today. Start now!")
+
 
 # ---------- CHALLENGES ----------
 elif st.session_state.page == "Challenges":
@@ -925,5 +971,6 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
