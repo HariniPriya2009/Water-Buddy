@@ -291,11 +291,10 @@ def plot_7day_intake(user):
         dd = date.today() - timedelta(days=d)
         dates.append(dd)
         actual_ml = user["history"].get(dd.isoformat(), {}).get("total_ml", 0)
-        actual_intake.append(actual_ml / 1000)  # Convert to litres
+        actual_intake.append(actual_ml / 1000)
         target_intake.append(daily_goal / 1000)
         date_labels.append(dd.strftime("%m/%d"))
     
-    # Create figure with transparent background
     fig, ax = plt.subplots(figsize=(10, 5))
     fig.patch.set_alpha(0.0)
     ax.patch.set_alpha(0.0)
@@ -303,13 +302,11 @@ def plot_7day_intake(user):
     x = range(len(dates))
     width = 0.35
     
-    # Create bars
     bars1 = ax.bar([i - width/2 for i in x], actual_intake, width, 
                     label='Actual Intake', color='#00BFFF', edgecolor='white', linewidth=2)
     bars2 = ax.bar([i + width/2 for i in x], target_intake, width, 
                     label='Daily Target', color='#FF6B6B', alpha=0.7, edgecolor='white', linewidth=2)
     
-    # Styling
     ax.set_xlabel('Date', fontsize=12, color='white', fontweight='bold')
     ax.set_ylabel('Water Intake (Litres)', fontsize=12, color='white', fontweight='bold')
     ax.set_title('Your Intake vs Daily Target (Past 7 Days)', fontsize=14, color='white', fontweight='bold', pad=20)
@@ -318,11 +315,9 @@ def plot_7day_intake(user):
     ax.tick_params(axis='y', colors='white')
     ax.legend(facecolor='#4682B4', edgecolor='white', framealpha=0.8, labelcolor='white')
     
-    # Grid
     ax.grid(True, alpha=0.3, color='white', linestyle='--')
     ax.set_axisbelow(True)
     
-    # Add value labels on bars
     for bars in [bars1, bars2]:
         for bar in bars:
             height = bar.get_height()
@@ -333,6 +328,7 @@ def plot_7day_intake(user):
     
     plt.tight_layout()
     return fig
+
 
 # ---------- NAVBAR ----------
 def navbar():
@@ -345,6 +341,72 @@ def navbar():
             st.session_state.page = p
             st.rerun()
     st.markdown("---")
+
+
+# ---------- COMPARISON VISUALIZATION ----------
+def show_comparison_chart(current_ml, target_ml):
+    """Visual comparison of current intake vs target"""
+    st.markdown("### 📊 Current vs Target Comparison")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.metric("💧 Current Intake", f"{current_ml/1000:.2f} L")
+    
+    with col2:
+        st.metric("🎯 Daily Target", f"{target_ml/1000:.2f} L")
+    
+    with col3:
+        remaining = max(0, target_ml - current_ml)
+        difference = current_ml - target_ml
+        st.metric("📈 Remaining", f"{remaining/1000:.2f} L", 
+                 delta=f"{difference/1000:.2f} L")
+    
+    # Visual bar comparison
+    percentage = min((current_ml / target_ml) * 100, 100)
+    
+    st.markdown(f"""
+    <div style='background: rgba(255,255,255,0.1); padding: 20px; border-radius: 15px; margin-top: 15px;'>
+        <h4 style='text-align: center; margin-bottom: 15px;'>Progress: {percentage:.1f}%</h4>
+        <div style='background: rgba(255,255,255,0.2); height: 40px; border-radius: 20px; overflow: hidden;'>
+            <div style='background: linear-gradient(90deg, #00BFFF, #1E90FF); height: 100%; width: {percentage}%; 
+                        display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;
+                        transition: width 0.5s ease;'>
+                {percentage:.0f}%
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# ---------- NAVBAR ----------
+def navbar():
+    pages = ["Dashboard", "Log Water", "Challenges", "Badges", "About", "Settings"]
+    cols = st.columns(len(pages))
+    for i, p in enumerate(pages):
+        if st.session_state.page == p:
+            cols[i].markdown(f"**➡️ {p}**")
+        elif cols[i].button(p):
+            st.session_state.page = p
+            st.rerun()
+    st.markdown("---")
+
+# ---------- USER MANAGEMENT ----------
+def ensure_user(name, password=None):
+    if name not in data["users"]:
+        data["users"][name] = {
+            "profile": {"name": name, "password": password or "", "age": None, "weight": None},
+            "history": {},
+            "badges": [],
+            "challenges": [],
+            "daily_goal_ml": 2000,
+            "settings": {
+                "reminder_enabled": False,
+                "reminder_minutes": 120,
+                "reminder_start_time": "09:00"
+            }
+        }
+    return data["users"][name]
+
 
 # ---------- USER MANAGEMENT ----------
 def ensure_user(name, password=None):
@@ -406,38 +468,47 @@ if st.session_state.page == "Login":
     if mode == "Sign Up":
         st.markdown("### 🎂 Tell us about yourself")
         
-        # Age selector with plus and minus buttons
-        st.write("**Select your age:**")
+       if mode == "Sign Up":
+        st.markdown("### 🎂 Tell us about yourself")
+        st.info("📌 We'll recommend a daily water goal based on your age!")
+
         if "age" not in st.session_state:
             st.session_state.age = 25
-        
+
+        # Age selector with +/- buttons
         col1, col2, col3 = st.columns([1, 2, 1])
         with col1:
-            if st.button("➖", key="minus_age") and st.session_state.age > 1:
+            if st.button("➖", key="age_minus") and st.session_state.age > 1:
                 st.session_state.age -= 1
                 st.rerun()
         with col2:
-            st.markdown(f"<h2 style='text-align:center;color:white;'>{st.session_state.age} years old</h2>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='text-align:center;'>{st.session_state.age} years old</h3>", unsafe_allow_html=True)
         with col3:
-            if st.button("➕", key="plus_age") and st.session_state.age < 120:
+            if st.button("➕", key="age_plus") and st.session_state.age < 120:
                 st.session_state.age += 1
                 st.rerun()
+
 
         # Calculate and display recommended goal
         recommended_goal = calculate_daily_goal(st.session_state.age)
         st.info(f"💡 **Recommended daily water intake for your age:** {recommended_goal:.1f} litres")
         
-        # Allow user to adjust the goal
-        st.write("**Adjust your daily goal (optional):**")
-        custom_goal = st.slider(
-            "Daily water goal (litres):", 
-            min_value=0.5, 
-            max_value=5.0, 
-            value=float(recommended_goal), 
-            step=0.1
-        )
+         st.markdown(f"""
+        <div class='info-box'>
+        <h4>💡 Recommended Daily Intake for Age {st.session_state.age}</h4>
+        <h2 style='text-align: center; color: #FFD700;'>{recommended_goal:.1f} Litres</h2>
+        <p style='text-align: center;'>({int(recommended_goal * 1000)} ml)</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("### 🎯 Customize Your Goal (Optional)")
+        custom_goal = st.slider("Adjust your daily goal (Litres):", 0.5, 5.0, recommended_goal, 0.1)
         
-        st.success(f"✅ Your daily goal is set to: **{custom_goal:.1f} litres** ({int(custom_goal * 1000)} ml)")
+        if custom_goal != recommended_goal:
+            st.warning(f"⚠️ You've adjusted from the recommended {recommended_goal:.1f}L to {custom_goal:.1f}L")
+        
+        st.success(f"✅ Your daily goal: **{custom_goal:.1f} litres** ({int(custom_goal * 1000)} ml)")  )
+        
 
         if st.button("Create Account 🚀"):
             if not name.strip() or not password.strip():
@@ -486,10 +557,21 @@ elif st.session_state.page == "Dashboard":
     
     st.markdown("---")
 
+      # Daily Tip
+    st.markdown(f"""
+    <div class='tip-box'>
+    {random.choice(hydration_tips)}
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+
     # Get today's data
     today_total = user["history"].get(today_str(), {}).get("total_ml", 0)
     daily_goal = user.get("daily_goal_ml", 2000)
     progress_percentage = (today_total / daily_goal) * 100
+
+
 
     st.markdown(f"### {get_motivational_message(progress_percentage)}")
     
@@ -979,9 +1061,3 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
-
-
-
-
-
-
