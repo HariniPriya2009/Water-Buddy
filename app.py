@@ -101,21 +101,39 @@ st.markdown(page_bg, unsafe_allow_html=True)
 DATA_FILE = "waterbuddy_data.json"
 
 def load_data():
-    if not os.path.exists(DATA_FILE):
+    """Load data from JSON file with error handling"""
+    try:
+        if not os.path.exists(DATA_FILE):
+            return {"users": {}}
+        
+        with open(DATA_FILE, "r") as f:
+            data = json.load(f)
+            
+        # Ensure proper structure
+        if "users" not in data:
+            data = {"users": {}}
+            
+        return data
+    except json.JSONDecodeError:
+        st.error("⚠️ Data file corrupted. Creating new file.")
         return {"users": {}}
-    with open(DATA_FILE, "r") as f:
-        return json.load(f)
+    except Exception as e:
+        st.error(f"⚠️ Error loading data: {str(e)}")
+        return {"users": {}}
 
 def save_data(data):
-    with open(DATA_FILE, "w") as f:
-        json.dump(data, f, indent=2, default=str)
+    """Save data to JSON file with error handling"""
+    try:
+        with open(DATA_FILE, "w") as f:
+            json.dump(data, f, indent=2, default=str)
+        return True
+    except Exception as e:
+        st.error(f"⚠️ Error saving data: {str(e)}")
+        return False
 
 def today_str():
+    """Return today's date as ISO string"""
     return date.today().isoformat()
-
-# FIX: Load data fresh each time to avoid stale data
-data = load_data()
-
 # ---------- INIT ----------
 if "page" not in st.session_state:
     st.session_state.page = "Login"
@@ -961,6 +979,7 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
