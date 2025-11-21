@@ -468,7 +468,7 @@ if st.session_state.page == "Login":
     if mode == "Sign Up":
         st.markdown("### 🎂 Tell us about yourself")
         
-       if mode == "Sign Up":
+    if mode == "Sign Up":
         st.markdown("### 🎂 Tell us about yourself")
         st.info("📌 We'll recommend a daily water goal based on your age!")
 
@@ -1061,3 +1061,4 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
