@@ -1058,8 +1058,8 @@ elif st.session_state.page == "Settings":
         else:
             st.warning("⚠️ Please confirm before deleting your data.")
 
-# ---------- SAVE ----------
-save_data(data)
+
+
 
 
 
