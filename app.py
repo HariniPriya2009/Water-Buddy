@@ -709,31 +709,32 @@ st.markdown("<h2 style='color:#FFD166;'>🏅 Your Badges & Achievements</h2>", u
 today = datetime.now().date()
 
 if user["history"]:
-sorted_days = sorted(user["history"].keys())
-streak = 1
-longest_streak = 1
-prev_date = datetime.strptime(sorted_days[0], "%Y-%m-%d").date()
+    sorted_days = sorted(user["history"].keys())
+    streak = 1
+    longest_streak = 1
+    prev_date = datetime.strptime(sorted_days[0], "%Y-%m-%d").date()
+
 
 for d in sorted_days[1:]:
-curr_date = datetime.strptime(d, "%Y-%m-%d").date()
+    curr_date = datetime.strptime(d, "%Y-%m-%d").date()
 if (curr_date - prev_date).days == 1:
-streak += 1
-longest_streak = max(longest_streak, streak)
+    streak += 1
+    longest_streak = max(longest_streak, streak)
 else:
-streak = 1
-prev_date = curr_date
-
-last_date = datetime.strptime(sorted_days[-1], "%Y-%m-%d").date()
+    streak = 1
+    prev_date = curr_date
+    last_date = datetime.strptime(sorted_days[-1], "%Y-%m-%d").date()
 if (today - last_date).days >= 2:
-streak = 0
+    streak = 0
 else:
-streak = 0
-longest_streak = 0
+    streak = 0
+    longest_streak = 0
 
 # Display streaks
 st.markdown("### 🔥 Your Hydration Streaks")
 col1, col2 = st.columns(2)
 with col1:
+    
 st.metric("Current Streak", f"{streak} days", delta="🔥")
 with col2:
 st.metric("Longest Streak", f"{longest_streak} days", delta="🏆")
@@ -750,34 +751,35 @@ badges_earned = []
 total_drinks = sum(len(day.get("entries", [])) for day in user["history"].values())
 
 if total_drinks >= 1 and "💧 First Sip!" not in user["badges"]:
-user["badges"].append("💧 First Sip!")
-badges_earned.append("💧 First Sip! — You've started your hydration journey!")
+    user["badges"].append("💧 First Sip!")
+    badges_earned.append("💧 First Sip! — You've started your hydration journey!")
 
 if streak >= 3 and "🌱 3-Day Streak" not in user["badges"]:
-user["badges"].append("🌱 3-Day Streak")
-badges_earned.append("🌱 3-Day Streak — Three days of consistent hydration!")
+    user["badges"].append("🌱 3-Day Streak")
+    badges_earned.append("🌱 3-Day Streak — Three days of consistent hydration!")
 
 if streak >= 7 and "🌈 Hydration Hero (1 Week)" not in user["badges"]:
 user["badges"].append("🌈 Hydration Hero (1 Week)")
 badges_earned.append("🌈 Hydration Hero — One week of staying hydrated!")
 
 if streak >= 30 and "🏆 Aqua Master (1 Month)" not in user["badges"]:
-user["badges"].append("🏆 Aqua Master (1 Month)")
-badges_earned.append("🏆 Aqua Master — 30 days of excellence!")
+    user["badges"].append("🏆 Aqua Master (1 Month)")
+    badges_earned.append("🏆 Aqua Master — 30 days of excellence!")
 
 if longest_streak >= 7 and "👑 Consistency King" not in user["badges"]:
-user["badges"].append("👑 Consistency King")
-badges_earned.append("👑 Consistency King — You've maintained a 7-day streak!")
+    user["badges"].append("👑 Consistency King")
+    badges_earned.append("👑 Consistency King — You've maintained a 7-day streak!")
 
 # Display badges
 st.markdown("### 🏆 Your Earned Badges")
 if not user["badges"]:
-st.info("🎯 No badges yet — keep hydrating to unlock achievements!")
+    st.info("🎯 No badges yet — keep hydrating to unlock achievements!")
 else:
-badge_cols = st.columns(3)
+    badge_cols = st.columns(3)
+    
 for idx, badge in enumerate(user["badges"]):
-with badge_cols[idx % 3]:
-st.markdown(f"""
+    with badge_cols[idx % 3]:
+        st.markdown(f"""
 <div class='badge-box'>
 <p style='text-align:center; font-size:18px; margin:0; color:#fff;'>{badge}</p>
 </div>
@@ -785,11 +787,11 @@ st.markdown(f"""
 
 # Show newly earned badges
 if badges_earned:
-st.markdown("---")
-st.markdown("### 🎊 New Achievements Unlocked!")
+    st.markdown("---")
+    st.markdown("### 🎊 New Achievements Unlocked!")
 for badge in badges_earned:
-st.success(badge)
-st.balloons()
+    st.success(badge)
+    st.balloons()
 
 # Save badge updates
 update_user_data(st.session_state.user, user)
@@ -821,10 +823,10 @@ step=0.1
 )
 
 if st.button("💾 Update Goal", type="primary"):
-user["daily_goal_ml"] = int(new_goal * 1000)
-update_user_data(st.session_state.user, user)
-st.success(f"✅ Goal updated successfully to {new_goal:.1f} L!")
-st.rerun()
+    user["daily_goal_ml"] = int(new_goal * 1000)
+    update_user_data(st.session_state.user, user)
+    st.success(f"✅ Goal updated successfully to {new_goal:.1f} L!")
+    st.rerun()
 
 st.markdown("---")
 
@@ -857,11 +859,11 @@ st.info(f"⏰ You will receive reminders every {rem_minutes} minutes between {re
 
 if st.button("💾 Save Reminder Settings", type="primary"):
 if "settings" not in user:
-user["settings"] = {}
-user["settings"]["reminder_enabled"] = rem_enabled
-user["settings"]["reminder_minutes"] = int(rem_minutes)
-user["settings"]["reminder_start_time"] = rem_start.strftime("%H:%M")
-update_user_data(st.session_state.user, user)
+    user["settings"] = {}
+    user["settings"]["reminder_enabled"] = rem_enabled
+    user["settings"]["reminder_minutes"] = int(rem_minutes)
+    user["settings"]["reminder_start_time"] = rem_start.strftime("%H:%M")
+    update_user_data(st.session_state.user, user)
 
 # Reset reminder state to apply new settings
 st.session_state.last_reminder_time = None
@@ -869,24 +871,24 @@ st.session_state.reminder_dismissed = False
 
 st.success("✅ Reminder settings saved!")
 if rem_enabled:
-st.info("🔔 Reminders are now active! You'll see notifications on your Dashboard and other pages.")
-st.rerun()
+    st.info("🔔 Reminders are now active! You'll see notifications on your Dashboard and other pages.")
+    st.rerun()
 
 st.markdown("---")
 
 # --- Test Reminder ---
 if rem_enabled:
-st.subheader("🧪 Test Reminder")
-st.write("Click the button below to see how a reminder looks:")
-if st.button("👀 Show Test Reminder"):
-st.markdown(f"""
-<div class='reminder-popup'>
-<h3 style='margin:0 0 10px 0; color: white;'>🔔 Hydration Reminder (TEST)</h3>
-<p style='margin:0; font-size: 16px;'>{random.choice(reminder_messages)}</p>
-</div>
-""", unsafe_allow_html=True)
+    st.subheader("🧪 Test Reminder")
+    st.write("Click the button below to see how a reminder looks:")
+    if st.button("👀 Show Test Reminder"):
+    st.markdown(f"""
+    <div class='reminder-popup'>
+    <h3 style='margin:0 0 10px 0; color: white;'>🔔 Hydration Reminder (TEST)</h3>
+    <p style='margin:0; font-size: 16px;'>{random.choice(reminder_messages)}</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-st.markdown("---")
+    st.markdown("---")
 
 # --- Logout Section ---
 st.subheader("🚪 Logout")
@@ -906,23 +908,25 @@ st.warning("⚠️ **WARNING:** This will permanently delete all your logs, badg
 
 RC = st.checkbox("I confirm I want to delete all my data.", key="confirm_delete")
 
-if st.button("❌ Delete All Data", type="primary"):
-if RC:
-data = load_data()
-if st.session_state.user in data["users"]:
-del data["users"][st.session_state.user]
-save_data(data)
-st.session_state.user = None
-st.session_state.page = "Login"
-st.session_state.last_reminder_time = None
-st.session_state.reminder_dismissed = False
-st.success("✅ All your data has been deleted.")
-st.rerun()
+if st.button("❌ Delete All Data", type="primary"):    
+    if RC:
+        data = load_data()
+    if st.session_state.user in data["users"]:
+        del data["users"][st.session_state.user]
+        save_data(data)
+        st.session_state.user = None
+        st.session_state.page = "Login"
+        st.session_state.last_reminder_time = None
+        st.session_state.reminder_dismissed = False
+        st.success("✅ All your data has been deleted.")
+        st.rerun()
+
 else:
-st.warning("⚠️ Please confirm before deleting your data.")
+    st.warning("⚠️ Please confirm before deleting your data.")
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
