@@ -757,8 +757,8 @@ if streak >= 3 and "🌱 3-Day Streak" not in user["badges"]:
     badges_earned.append("🌱 3-Day Streak — Three days of consistent hydration!")
 
 if streak >= 7 and "🌈 Hydration Hero (1 Week)" not in user["badges"]:
-user["badges"].append("🌈 Hydration Hero (1 Week)")
-badges_earned.append("🌈 Hydration Hero — One week of staying hydrated!")
+    user["badges"].append("🌈 Hydration Hero (1 Week)")
+    badges_earned.append("🌈 Hydration Hero — One week of staying hydrated!")
 
 if streak >= 30 and "🏆 Aqua Master (1 Month)" not in user["badges"]:
     user["badges"].append("🏆 Aqua Master (1 Month)")
@@ -924,6 +924,7 @@ else:
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
