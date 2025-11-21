@@ -240,7 +240,7 @@ def navbar():
             cols[i].markdown(f"**➡️ {p}**")
         elif cols[i].button(p, key=f"nav_{p}"):
             st.session_state.page = p
-            st.experimental_rerun()
+            st.rerun()
     st.markdown("---")
 
 # ---------- USER MANAGEMENT ----------
@@ -869,3 +869,4 @@ elif st.session_state.page == "Settings":
                 st.experimental_rerun()
         else:
             st.warning("⚠️ Please confirm before deleting your data.")
+
