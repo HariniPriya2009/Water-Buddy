@@ -492,8 +492,7 @@ if st.session_state.page == "Login":
         # Calculate and display recommended goal
         recommended_goal = calculate_daily_goal(st.session_state.age)
         st.info(f"💡 **Recommended daily water intake for your age:** {recommended_goal:.1f} litres")
-        
-         st.markdown(f"""
+        st.markdown(f"""
         <div class='info-box'>
         <h4>💡 Recommended Daily Intake for Age {st.session_state.age}</h4>
         <h2 style='text-align: center; color: #FFD700;'>{recommended_goal:.1f} Litres</h2>
@@ -1061,4 +1060,5 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
