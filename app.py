@@ -1,4 +1,4 @@
-import streamlit as st
+1import streamlit as st
 import pandas as pd
 import json
 import os
@@ -734,15 +734,13 @@ else:
 st.markdown("### 🔥 Your Hydration Streaks")
 col1, col2 = st.columns(2)
 with col1:
-    
-st.metric("Current Streak", f"{streak} days", delta="🔥")
+    st.metric("Current Streak", f"{streak} days", delta="🔥")
 with col2:
-st.metric("Longest Streak", f"{longest_streak} days", delta="🏆")
-
-next_goal = 7 if streak < 7 else (30 if streak < 30 else 60)
-progress = min(streak / next_goal, 1.0)
-st.progress(progress)
-st.caption(f"{streak}/{next_goal} days toward your next milestone!")
+    st.metric("Longest Streak", f"{longest_streak} days", delta="🏆")
+    next_goal = 7 if streak < 7 else (30 if streak < 30 else 60)
+    progress = min(streak / next_goal, 1.0)
+    st.progress(progress)
+    st.caption(f"{streak}/{next_goal} days toward your next milestone!")
 
 st.markdown("---")
 
@@ -926,6 +924,7 @@ else:
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
