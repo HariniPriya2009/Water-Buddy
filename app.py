@@ -101,10 +101,7 @@ st.markdown(page_bg, unsafe_allow_html=True)
 DATA_FILE = "waterbuddy_data.json"
 
 def load_data():
-  """Load data from JSON file with error handling"""
-try:
-if not os.path.exists(DATA_FILE):
-return {"users": {}}
+  """Load data from JSON file with error handling""
 
 with open(DATA_FILE, "r") as f:
 data = json.load(f)
@@ -979,4 +976,5 @@ st.warning("⚠️ Please confirm before deleting your data.")
 
 # ---------- SAVE ----------
 save_data(data)
+
 
