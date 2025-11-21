@@ -7,6 +7,22 @@ from datetime import datetime, timedelta, date, time
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
+
+# Missing hydration tips list
+hydration_tips = [
+    "💧 Start your day with a glass of water!",
+    "🌿 Keep a water bottle with you at all times!",
+    "⏰ Set reminders to drink water regularly!",
+    "🍋 Add lemon or fruit for flavor!",
+    "🏃‍♀️ Drink extra water during exercise!",
+    "☕ Balance caffeine with extra water!",
+    "🥗 Eat water-rich foods like cucumber and watermelon!",
+    "📱 Use apps to track your hydration!",
+]
+
+# Missing data variable initialization
+data = load_data()
+
 # ---------- CONFIG ----------
 st.set_page_config(page_title="WaterBuddy — SipSmart", page_icon="💧", layout="centered")
 
@@ -1057,6 +1073,7 @@ elif st.session_state.page == "Settings":
                 st.rerun()
         else:
             st.warning("⚠️ Please confirm before deleting your data.")
+
 
 
 
