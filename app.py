@@ -699,8 +699,9 @@ elif st.session_state.page == "Challenges":
         st.info("💡 No challenges yet. Create one to stay motivated!")
 # ---------- BADGES ----------
 elif st.session_state.page == "Badges":
-navbar()
-user = get_user_data(st.session_state.user)
+    navbar()
+    user = get_user_data(st.session_state.user)
+    
 
 st.markdown("<h2 style='color:#FFD166;'>🏅 Your Badges & Achievements</h2>", unsafe_allow_html=True)
 
@@ -922,6 +923,7 @@ st.warning("⚠️ Please confirm before deleting your data.")
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
 
