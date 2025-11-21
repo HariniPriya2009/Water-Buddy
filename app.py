@@ -306,19 +306,41 @@ if st.session_state.page == "Login":
     password = st.text_input("Password:", type="password")
 
     if mode == "Sign Up":
-        st.markdown("### 🎂 Tell us about yourself")
-        st.write("**Select your age:**")
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col1:
-            if st.button("➖", key="minus_age") and st.session_state.age > 1:
-                st.session_state.age -= 1
-                st.experimental_rerun()
-        with col2:
-            st.markdown(f"<h2 style='text-align:center;color:white;'>{st.session_state.age} years old</h2>", unsafe_allow_html=True)
-        with col3:
-            if st.button("➕", key="plus_age") and st.session_state.age < 120:
-                st.session_state.age += 1
-                st.experimental_rerun()
+# --- AGE SELECTION (Buttons + Manual Input) ---
+st.markdown("### 🎂 Tell us about yourself")
+st.write("**Select your age:**")
+
+col1, col2, col3 = st.columns([1, 2, 1])
+
+with col1:
+    if st.button("➖", key="minus_age") and st.session_state.age > 1:
+        st.session_state.age -= 1
+        st.rerun()
+
+with col2:
+    # Manual age input
+    typed_age = st.number_input(
+        "or type age:",
+        min_value=1,
+        max_value=120,
+        value=st.session_state.age,
+        key="typed_age_input"
+    )
+
+    # Sync typed age with session_state
+    if typed_age != st.session_state.age:
+        st.session_state.age = typed_age
+
+    # Display final age
+    st.markdown(
+        f"<h2 style='text-align:center;color:white;'>{st.session_state.age} years old</h2>",
+        unsafe_allow_html=True
+    )
+
+with col3:
+    if st.button("➕", key="plus_age") and st.session_state.age < 120:
+        st.session_state.age += 1
+        st.rerun()
 
         recommended_goal = calculate_daily_goal(st.session_state.age)
         st.info(f"💡 **Recommended daily water intake for your age:** {recommended_goal:.1f} litres")
@@ -367,7 +389,7 @@ if st.session_state.page == "Login":
                         st.success(f"🎉 Welcome {username}! Your account has been created!")
                         st.balloons()
                         st.session_state.page = "Dashboard"
-                        st.experimental_rerun()
+                        st.rerun()
                     else:
                         st.error("❌ Failed to save account. Please try again.")
     else:
@@ -468,7 +490,7 @@ elif st.session_state.page == "Dashboard":
             user["history"][today] = {"total_ml": 0, "entries": []}
             if update_user_data(st.session_state.user, user):
                 st.success("✅ Today's progress has been reset!")
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.error("❌ Failed to save reset.")
         else:
@@ -593,7 +615,7 @@ elif st.session_state.page == "Challenges":
         st.error("❌ User data not found. Please log in again.")
         st.session_state.user = None
         st.session_state.page = "Login"
-        st.experimental_rerun()
+        st.rerun()
 
     st.header("🏁 Hydration Challenges")
     st.markdown("### 🎯 Create a New Challenge")
@@ -763,7 +785,7 @@ elif st.session_state.page == "Settings":
         st.error("❌ User data not found. Please log in again.")
         st.session_state.user = None
         st.session_state.page = "Login"
-        st.experimental_rerun()
+        st.rerun()
 
     st.markdown("<h2 style='color:#FFD166;'>⚙️ Settings</h2>", unsafe_allow_html=True)
     profile = user.get("profile", {})
@@ -786,7 +808,7 @@ elif st.session_state.page == "Settings":
         user["daily_goal_ml"] = int(new_goal * 1000)
         if update_user_data(st.session_state.user, user):
             st.success(f"✅ Goal updated successfully to {new_goal:.1f} L!")
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("❌ Failed to save goal.")
 
@@ -825,7 +847,7 @@ elif st.session_state.page == "Settings":
             st.success("✅ Reminder settings saved!")
             if rem_enabled:
                 st.info("🔔 Reminders are now active! You'll see notifications on your Dashboard and other pages.")
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("❌ Failed to save reminder settings.")
 
@@ -869,4 +891,5 @@ elif st.session_state.page == "Settings":
                 st.rerun()
         else:
             st.warning("⚠️ Please confirm before deleting your data.")
+
 
