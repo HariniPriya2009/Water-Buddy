@@ -506,7 +506,7 @@ if st.session_state.page == "Login":
         if custom_goal != recommended_goal:
             st.warning(f"⚠️ You've adjusted from the recommended {recommended_goal:.1f}L to {custom_goal:.1f}L")
         
-        st.success(f"✅ Your daily goal: **{custom_goal:.1f} litres** ({int(custom_goal * 1000)} ml)")  )
+        st.success(f"✅ Your daily goal: **{custom_goal:.1f} litres** ({int(custom_goal * 1000)} ml")
         
 
         if st.button("Create Account 🚀"):
@@ -1060,5 +1060,6 @@ elif st.session_state.page == "Settings":
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
