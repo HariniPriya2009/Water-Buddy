@@ -14,84 +14,68 @@ st.set_page_config(page_title="WaterBuddy — SipSmart", page_icon="💧", layou
 page_bg = """
 <style>
 .stApp {
-background: linear-gradient(135deg, #89CFF0 0%, #4682B4 50%, #1E90FF 100%);
-color: white;
-font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #89CFF0 0%, #4682B4 50%, #1E90FF 100%);
+    color: white;
+    font-family: 'Poppins', sans-serif;
 }
 h1, h2, h3, h4 {
-color: #ffffff !important;
-text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+    color: #ffffff !important;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
 }
 div.stButton > button:first-child {
-background: linear-gradient(90deg, #1E90FF, #00BFFF);
-color: white;
-border-radius: 12px;
-border: none;
-padding: 0.6em 1.5em;
-font-weight: 600;
-box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
-transition: all 0.3s ease;
+    background: linear-gradient(90deg, #1E90FF, #00BFFF);
+    color: white;
+    border-radius: 12px;
+    border: none;
+    padding: 0.6em 1.5em;
+    font-weight: 600;
+    box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
 }
 div.stButton > button:first-child:hover {
-background: linear-gradient(90deg, #00BFFF, #1E90FF);
-transform: scale(1.05);
+    background: linear-gradient(90deg, #00BFFF, #1E90FF);
+    transform: scale(1.05);
 }
 input, textarea, select {
-border-radius: 10px !important;
-border: 1px solid #87CEFA !important;
+    border-radius: 10px !important;
+    border: 1px solid #87CEFA !important;
 }
 .stProgress > div > div > div > div {
-background-color: #00BFFF;
+    background-color: #00BFFF;
 }
 [data-testid="stMetricValue"] {
-color: #ffffff !important;
+    color: #ffffff !important;
 }
 .water-bottle {
-width: 150px;
-height: 300px;
-border: 3px solid #ffffff;
-border-radius: 20px 20px 40px 40px;
-position: relative;
-background: linear-gradient(180deg, transparent 0%, #00BFFF 0%);
-margin: 20px auto;
-box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    width: 150px;
+    height: 300px;
+    border: 3px solid #ffffff;
+    border-radius: 20px 20px 40px 40px;
+    position: relative;
+    background: linear-gradient(180deg, transparent 0%, #00BFFF 0%);
+    margin: 20px auto;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3);
 }
 .badge-box {
-background: linear-gradient(135deg, #FFD700, #FFA500);
-padding: 15px;
-border-radius: 10px;
-margin: 10px 0;
-box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    padding: 15px;
+    border-radius: 10px;
+    margin: 10px 0;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 .comparison-box {
-background: rgba(255, 255, 255, 0.2);
-padding: 20px;
-border-radius: 15px;
-margin: 15px 0;
-backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.2);
+    padding: 20px;
+    border-radius: 15px;
+    margin: 15px 0;
+    backdrop-filter: blur(10px);
 }
-.reminder-popup {
-position: fixed;
-top: 20px;
-right: 20px;
-background: linear-gradient(135deg, #FF6B6B, #FF8E53);
-color: white;
-padding: 20px;
-border-radius: 15px;
-box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-z-index: 9999;
-animation: slideIn 0.5s ease-out;
-max-width: 350px;
-}
-@keyframes slideIn {
-from {
-transform: translateX(400px);
-opacity: 0;
-}
-to {
-transform: translateX(0);
-opacity: 1;
-}
+.log-entry {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px 15px;
+    margin: 5px 0;
+    border-radius: 10px;
+    border-left: 4px solid #00BFFF;
 }
 </style>
 """
@@ -101,656 +85,618 @@ st.markdown(page_bg, unsafe_allow_html=True)
 DATA_FILE = "waterbuddy_data.json"
 
 def load_data():
-  """Load data from JSON file with error handling""
-
-with open(DATA_FILE, "r") as f:
-data = json.load(f)
-
-# Ensure proper structure
-if "users" not in data:
-data = {"users": {}}
-
-return data
-except json.JSONDecodeError:
-st.error("⚠️ Data file corrupted. Creating new file.")
-return {"users": {}}
-except Exception as e:
-st.error(f"⚠️ Error loading data: {str(e)}")
-return {"users": {}}
+    """Load data from JSON file with error handling"""
+    try:
+        if not os.path.exists(DATA_FILE):
+            return {"users": {}}
+        
+        with open(DATA_FILE, "r") as f:
+            data = json.load(f)
+            
+        # Ensure proper structure
+        if "users" not in data:
+            data = {"users": {}}
+            
+        return data
+    except json.JSONDecodeError:
+        st.error("⚠️ Data file corrupted. Creating new file.")
+        return {"users": {}}
+    except Exception as e:
+        st.error(f"⚠️ Error loading data: {str(e)}")
+        return {"users": {}}
 
 def save_data(data):
-"""Save data to JSON file with error handling"""
-try:
-with open(DATA_FILE, "w") as f:
-json.dump(data, f, indent=2, default=str)
-return True
-except Exception as e:
-st.error(f"⚠️ Error saving data: {str(e)}")
-return False
+    """Save data to JSON file with error handling"""
+    try:
+        with open(DATA_FILE, "w") as f:
+            json.dump(data, f, indent=2, default=str)
+        return True
+    except Exception as e:
+        st.error(f"⚠️ Error saving data: {str(e)}")
+        return False
 
 def today_str():
-"""Return today's date as ISO string"""
-return date.today().isoformat()
-# ---------- INIT ----------
+    """Return today's date as ISO string"""
+    return date.today().isoformat()
+
+# ---------- INIT SESSION STATE ----------
 if "page" not in st.session_state:
-st.session_state.page = "Login"
+    st.session_state.page = "Login"
 if "user" not in st.session_state:
-st.session_state.user = None
-if "last_reminder_time" not in st.session_state:
-st.session_state.last_reminder_time = None
-if "reminder_dismissed" not in st.session_state:
-st.session_state.reminder_dismissed = False
+    st.session_state.user = None
+if "age" not in st.session_state:
+    st.session_state.age = 25
 
 # ---------- AGE-BASED GOAL CALCULATOR (FEATURE 1) ----------
 def calculate_daily_goal(age, weight=None, activity_level="moderate"):
-"""
-Calculate recommended daily water intake based on age and other factors
-Age ranges and recommendations based on health guidelines
-"""
-if age < 4:
-return 1.3 # Toddlers: 1.3L
-elif age < 9:
-return 1.7 # Children 4-8: 1.7L
-elif age < 14:
-return 2.4 if age >= 9 else 2.1 # Pre-teens: 2.1-2.4L
-elif age < 19:
-return 2.8 # Teenagers: 2.8L
-elif age < 51:
-return 3.0 # Adults: 3.0L
-elif age < 71:
-return 2.8 # Middle-aged: 2.8L
-else:
-return 2.5 # Seniors: 2.5L
+    """Calculate recommended daily water intake based on age"""
+    if age < 4:
+        return 1.3
+    elif age < 9:
+        return 1.7
+    elif age < 14:
+        return 2.4 if age >= 9 else 2.1
+    elif age < 19:
+        return 2.8
+    elif age < 51:
+        return 3.0
+    elif age < 71:
+        return 2.8
+    else:
+        return 2.5
 
 # ---------- MOTIVATIONAL MESSAGES (FEATURE 4) ----------
 def get_motivational_message(percentage):
-"""Return motivational message based on progress percentage"""
-if percentage == 0:
-return "🌵 Time to start hydrating! Your body needs water!"
-elif percentage < 20:
-return "💧 Great first step! Keep the momentum going!"
-elif percentage < 40:
-return "😊 Good progress! You're building a healthy habit!"
-elif percentage < 60:
-return "💪 Halfway there! You're doing amazing!"
-elif percentage < 80:
-return "🌟 Excellent work! Almost at your goal!"
-elif percentage < 100:
-return "🔥 So close! Just a bit more to reach your target!"
-elif percentage >= 100:
-return "🎉 GOAL ACHIEVED! You're a hydration champion! 🏆"
-else:
-return "💦 Keep drinking water!"
+    """Return motivational message based on progress percentage"""
+    if percentage == 0:
+        return "🌵 Time to start hydrating! Your body needs water!"
+    elif percentage < 20:
+        return "💧 Great first step! Keep the momentum going!"
+    elif percentage < 40:
+        return "😊 Good progress! You're building a healthy habit!"
+    elif percentage < 60:
+        return "💪 Halfway there! You're doing amazing!"
+    elif percentage < 80:
+        return "🌟 Excellent work! Almost at your goal!"
+    elif percentage < 100:
+        return "🔥 So close! Just a bit more to reach your target!"
+    else:
+        return "🎉 GOAL ACHIEVED! You're a hydration champion! 🏆"
 
 def get_mascot_image(percentage):
-"""Return mascot image path based on progress"""
-if percentage < 20:
-return r"image/hardrated 1.webp" # Dehydrated
-elif percentage < 50:
-return r"image/happy-cute hydration 2.gif" # Getting there
-elif percentage < 100:
-return r"image/hydrated 3.webp" # Almost done
-else:
-return r"image/strong 4.webp" # Goal achieved!
+    """Return mascot image path based on progress"""
+    if percentage < 20:
+        return r"image/hardrated 1.webp"
+    elif percentage < 50:
+        return r"image/happy-cute hydration 2.gif"
+    elif percentage < 100:
+        return r"image/hydrated 3.webp"
+    else:
+        return r"image/strong 4.webp"
 
 # ---------- FUN FACTS / DAILY TIPS ----------
 fun_facts = [
-"💧 Drinking water can boost your mood and energy levels instantly!",
-"🌿 Your brain is around 75% water — stay hydrated to stay sharp!",
-"🚰 You lose about 1 litre of water every day just by breathing and sweating.",
-"🧊 Cold water can slightly increase your metabolism as your body warms it up!",
-"💦 Drinking enough water can improve your skin's glow naturally.",
-"🥤 Sometimes thirst feels like hunger — drinking water first can prevent overeating.",
-"🏃‍♀️ Proper hydration helps your muscles work more efficiently during workouts.",
-"🕐 Even mild dehydration (1-2%) can reduce your focus and concentration levels.",
-"🌊 Water helps regulate body temperature and flush out toxins.",
-"🍉 Hydrating foods like watermelon, cucumber, and oranges help boost your intake!"
+    "💧 Drinking water can boost your mood and energy levels instantly!",
+    "🌿 Your brain is around 75% water — stay hydrated to stay sharp!",
+    "🚰 You lose about 1 litre of water every day just by breathing and sweating.",
+    "🧊 Cold water can slightly increase your metabolism as your body warms it up!",
+    "💦 Drinking enough water can improve your skin's glow naturally.",
+    "🥤 Sometimes thirst feels like hunger — drinking water first can prevent overeating.",
+    "🏃‍♀️ Proper hydration helps your muscles work more efficiently during workouts.",
+    "🕐 Even mild dehydration (1-2%) can reduce your focus and concentration levels.",
+    "🌊 Water helps regulate body temperature and flush out toxins.",
+    "🍉 Hydrating foods like watermelon, cucumber, and oranges help boost your intake!"
 ]
-
-# ---------- REMINDER MESSAGES ----------
-reminder_messages = [
-"💧 Time to hydrate! Your body is calling for water!",
-"🚰 Don't forget to drink water! Stay refreshed!",
-"💦 Hydration check! Have you had water recently?",
-"🌊 Your brain is 75% water — give it what it needs!",
-"🥤 Quick reminder: Drink some water right now!",
-"💧 Staying hydrated = Staying healthy! Drink up!",
-"🔔 Ding ding! It's water o'clock!",
-"🌟 Small sips lead to big wins! Drink water now!",
-"💪 Keep your energy up! Time for some H2O!",
-"🎯 Goal-getter! Don't forget your hydration goal today!"
-]
-
-# ---------- REMINDER LOGIC ----------
-def check_reminder(user):
-"""Check if it's time to show a reminder"""
-settings = user.get("settings", {})
-
-# Check if reminders are enabled
-if not settings.get("reminder_enabled", False):
-return False
-
-# Get reminder settings
-interval_minutes = settings.get("reminder_minutes", 120)
-start_time_str = settings.get("reminder_start_time", "09:00")
-
-# Parse start time
-try:
-start_hour, start_minute = map(int, start_time_str.split(":"))
-start_time = time(start_hour, start_minute)
-except:
-start_time = time(9, 0)
-
-now = datetime.now()
-current_time = now.time()
-
-# Check if we're within active hours (start_time to 22:00)
-end_time = time(22, 0)
-if not (start_time <= current_time <= end_time):
-return False
-
-# Check last reminder time
-if st.session_state.last_reminder_time:
-time_since_last = (now - st.session_state.last_reminder_time).total_seconds() / 60
-if time_since_last < interval_minutes:
-return False
-
-# Check if reminder was dismissed recently (within 5 minutes)
-if st.session_state.reminder_dismissed:
-return False
-
-return True
-
-def show_reminder():
-"""Display reminder popup"""
-message = random.choice(reminder_messages)
-
-st.markdown(f"""
-<div class='reminder-popup'>
-<h3 style='margin:0 0 10px 0; color: white;'>🔔 Hydration Reminder</h3>
-<p style='margin:0; font-size: 16px;'>{message}</p>
-</div>
-""", unsafe_allow_html=True)
-
-# Update last reminder time
-st.session_state.last_reminder_time = datetime.now()
-st.session_state.reminder_dismissed = False
 
 # ---------- MATPLOTLIB GRAPH FUNCTION ----------
 def plot_7day_intake(user):
-"""Create a matplotlib bar chart showing 7-day water intake vs target"""
-daily_goal = user.get("daily_goal_ml", 2000)
-
-dates, actual_intake, target_intake = [], [], []
-date_labels = []
-
-for d in range(6, -1, -1):
-dd = date.today() - timedelta(days=d)
-dates.append(dd)
-actual_ml = user["history"].get(dd.isoformat(), {}).get("total_ml", 0)
-actual_intake.append(actual_ml / 1000) # Convert to litres
-target_intake.append(daily_goal / 1000)
-date_labels.append(dd.strftime("%m/%d"))
-
-# Create figure with transparent background
-fig, ax = plt.subplots(figsize=(10, 5))
-fig.patch.set_alpha(0.0)
-ax.patch.set_alpha(0.0)
-
-x = range(len(dates))
-width = 0.35
-
-# Create bars
-bars1 = ax.bar([i - width/2 for i in x], actual_intake, width,
-label='Actual Intake', color='#00BFFF', edgecolor='white', linewidth=2)
-bars2 = ax.bar([i + width/2 for i in x], target_intake, width,
-label='Daily Target', color='#FF6B6B', alpha=0.7, edgecolor='white', linewidth=2)
-
-# Styling
-ax.set_xlabel('Date', fontsize=12, color='white', fontweight='bold')
-ax.set_ylabel('Water Intake (Litres)', fontsize=12, color='white', fontweight='bold')
-ax.set_title('Your Intake vs Daily Target (Past 7 Days)', fontsize=14, color='white', fontweight='bold', pad=20)
-ax.set_xticks(x)
-ax.set_xticklabels(date_labels, color='white', fontsize=10)
-ax.tick_params(axis='y', colors='white')
-ax.legend(facecolor='#4682B4', edgecolor='white', framealpha=0.8, labelcolor='white')
-
-# Grid
-ax.grid(True, alpha=0.3, color='white', linestyle='--')
-ax.set_axisbelow(True)
-
-# Add value labels on bars
-for bars in [bars1, bars2]:
-for bar in bars:
-height = bar.get_height()
-if height > 0:
-ax.text(bar.get_x() + bar.get_width()/2., height,
-f'{height:.1f}L',
-ha='center', va='bottom', color='white', fontsize=9, fontweight='bold')
-
-plt.tight_layout()
-return fig
+    """Create a matplotlib bar chart showing 7-day water intake vs target"""
+    daily_goal = user.get("daily_goal_ml", 2000)
+    
+    dates, actual_intake, target_intake = [], [], []
+    date_labels = []
+    
+    for d in range(6, -1, -1):
+        dd = date.today() - timedelta(days=d)
+        dates.append(dd)
+        actual_ml = user["history"].get(dd.isoformat(), {}).get("total_ml", 0)
+        actual_intake.append(actual_ml / 1000)
+        target_intake.append(daily_goal / 1000)
+        date_labels.append(dd.strftime("%m/%d"))
+    
+    fig, ax = plt.subplots(figsize=(10, 5))
+    fig.patch.set_alpha(0.0)
+    ax.patch.set_alpha(0.0)
+    
+    x = range(len(dates))
+    width = 0.35
+    
+    bars1 = ax.bar([i - width/2 for i in x], actual_intake, width, 
+                    label='Actual Intake', color='#00BFFF', edgecolor='white', linewidth=2)
+    bars2 = ax.bar([i + width/2 for i in x], target_intake, width, 
+                    label='Daily Target', color='#FF6B6B', alpha=0.7, edgecolor='white', linewidth=2)
+    
+    ax.set_xlabel('Date', fontsize=12, color='white', fontweight='bold')
+    ax.set_ylabel('Water Intake (Litres)', fontsize=12, color='white', fontweight='bold')
+    ax.set_title('Your Intake vs Daily Target (Past 7 Days)', fontsize=14, color='white', fontweight='bold', pad=20)
+    ax.set_xticks(x)
+    ax.set_xticklabels(date_labels, color='white', fontsize=10)
+    ax.tick_params(axis='y', colors='white')
+    ax.legend(facecolor='#4682B4', edgecolor='white', framealpha=0.8, labelcolor='white')
+    ax.grid(True, alpha=0.3, color='white', linestyle='--')
+    ax.set_axisbelow(True)
+    
+    for bars in [bars1, bars2]:
+        for bar in bars:
+            height = bar.get_height()
+            if height > 0:
+                ax.text(bar.get_x() + bar.get_width()/2., height,
+                       f'{height:.1f}L',
+                       ha='center', va='bottom', color='white', fontsize=9, fontweight='bold')
+    
+    plt.tight_layout()
+    return fig
 
 # ---------- NAVBAR ----------
 def navbar():
-pages = ["Dashboard", "Log Water", "Challenges", "Badges", "Settings"]
-cols = st.columns(len(pages))
-for i, p in enumerate(pages):
-if st.session_state.page == p:
-cols[i].markdown(f"**➡️ {p}**")
-elif cols[i].button(p):
-st.session_state.page = p
-st.rerun()
-st.markdown("---")
+    """Display navigation bar"""
+    pages = ["Dashboard", "Log Water", "Challenges", "Badges", "Settings"]
+    cols = st.columns(len(pages))
+    for i, p in enumerate(pages):
+        if st.session_state.page == p:
+            cols[i].markdown(f"**➡️ {p}**")
+        elif cols[i].button(p, key=f"nav_{p}"):
+            st.session_state.page = p
+            st.rerun()
+    st.markdown("---")
 
 # ---------- USER MANAGEMENT ----------
-def ensure_user(name, password=None):
-data = load_data()
-
-if name not in data["users"]:
-data["users"][name] = {
-"profile": {"name": name, "password": password or "", "age": None, "weight": None},
-"history": {},
-"badges": [],
-"challenges": [],
-"daily_goal_ml": 2000,
-"settings": {
-"reminder_enabled": False,
-"reminder_minutes": 120,
-"reminder_start_time": "09:00",
-"theme": "light"
-}
-}
-save_data(data)
-
-return data["users"][name]
-
 def get_user_data(username):
-"""Get fresh user data from file"""
-data = load_data()
-return data["users"].get(username, None)
+    """Get fresh user data from file"""
+    data = load_data()
+    if username in data.get("users", {}):
+        return data["users"][username]
+    return None
 
 def update_user_data(username, user_data):
-"""Update user data and save to file"""
-data = load_data()
-data["users"][username] = user_data
-save_data(data)
+    """Update user data and save to file"""
+    data = load_data()
+    if "users" not in data:
+        data["users"] = {}
+    data["users"][username] = user_data
+    return save_data(data)
 
-# ---------- CHECK AND SHOW REMINDER (For logged-in users) ----------
-if st.session_state.user and st.session_state.page != "Login":
-user = get_user_data(st.session_state.user)
-if user and check_reminder(user):
-show_reminder()
+def ensure_user(name, password=None):
+    """Ensure user exists with proper structure"""
+    data = load_data()
+    
+    if name not in data["users"]:
+        data["users"][name] = {
+            "profile": {
+                "name": name, 
+                "password": password or "", 
+                "age": None, 
+                "weight": None
+            },
+            "history": {},
+            "badges": [],
+            "challenges": [],
+            "daily_goal_ml": 2000,
+            "settings": {
+                "reminder_enabled": False,
+                "reminder_minutes": 120,
+                "reminder_start_time": "09:00"
+            }
+        }
+        save_data(data)
+    
+    return data["users"][name]
 
-# Add dismiss button in sidebar
-with st.sidebar:
-if st.button("✅ Dismiss Reminder"):
-st.session_state.reminder_dismissed = True
-st.session_state.last_reminder_time = datetime.now()
-st.rerun()
+def verify_user(username, password):
+    """Verify user credentials"""
+    data = load_data()
+    
+    # Check if user exists
+    if username not in data.get("users", {}):
+        return False, "User not found"
+    
+    user = data["users"][username]
+    
+    # Check password
+    stored_password = user.get("profile", {}).get("password", "")
+    
+    if stored_password == password:
+        return True, "Success"
+    else:
+        return False, "Incorrect password"
 
 # ---------- LOGIN / SIGN UP ----------
 if st.session_state.page == "Login":
-st.markdown("<h1 style='color:white;text-align:center;font-size:48px;'>💧 Welcome to WaterBuddy!</h1>", unsafe_allow_html=True)
-st.subheader("🌊 Hydrate Your Lifestyle with Smart Tracking")
-st.markdown("---")
+    st.markdown("<h1 style='color:white;text-align:center;font-size:48px;'>💧 Welcome to WaterBuddy!</h1>", unsafe_allow_html=True)
+    st.subheader("🌊 Hydrate Your Lifestyle with Smart Tracking")
+    st.markdown("---")
 
-mode = st.radio("Select mode:", ["Login", "Sign Up"], horizontal=True)
+    mode = st.radio("Select mode:", ["Login", "Sign Up"], horizontal=True)
 
-name = st.text_input("Username:")
-password = st.text_input("Password:", type="password")
+    name = st.text_input("Username:")
+    password = st.text_input("Password:", type="password")
 
-if mode == "Sign Up":
-st.markdown("### 🎂 Tell us about yourself")
+    if mode == "Sign Up":
+        st.markdown("### 🎂 Tell us about yourself")
+        
+        st.write("**Select your age:**")
+        
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col1:
+            if st.button("➖", key="minus_age") and st.session_state.age > 1:
+                st.session_state.age -= 1
+                st.rerun()
+        with col2:
+            st.markdown(f"<h2 style='text-align:center;color:white;'>{st.session_state.age} years old</h2>", unsafe_allow_html=True)
+        with col3:
+            if st.button("➕", key="plus_age") and st.session_state.age < 120:
+                st.session_state.age += 1
+                st.rerun()
 
-# Age selector with plus and minus buttons
-st.write("**Select your age:**")
-if "age" not in st.session_state:
-st.session_state.age = 25
+        recommended_goal = calculate_daily_goal(st.session_state.age)
+        st.info(f"💡 **Recommended daily water intake for your age:** {recommended_goal:.1f} litres")
+        
+        st.write("**Adjust your daily goal (optional):**")
+        custom_goal = st.slider(
+            "Daily water goal (litres):", 
+            min_value=0.5, 
+            max_value=5.0, 
+            value=float(recommended_goal), 
+            step=0.1,
+            key="goal_slider"
+        )
+        
+        st.success(f"✅ Your daily goal is set to: **{custom_goal:.1f} litres** ({int(custom_goal * 1000)} ml)")
 
-col1, col2, col3 = st.columns([1, 2, 1])
-with col1:
-if st.button("➖", key="minus_age") and st.session_state.age > 1:
-st.session_state.age -= 1
-st.rerun()
-with col2:
-st.markdown(f"<h2 style='text-align:center;color:white;'>{st.session_state.age} years old</h2>", unsafe_allow_html=True)
-with col3:
-if st.button("➕", key="plus_age") and st.session_state.age < 120:
-st.session_state.age += 1
-st.rerun()
+        if st.button("Create Account 🚀", key="signup_btn"):
+            if not name.strip():
+                st.warning("⚠️ Please enter a username!")
+            elif not password.strip():
+                st.warning("⚠️ Please enter a password!")
+            else:
+                data = load_data()
+                
+                if name.strip() in data.get("users", {}):
+                    st.error("❌ Username already exists! Try logging in instead.")
+                else:
+                    # Create new user
+                    new_user = {
+                        "profile": {
+                            "name": name.strip(),
+                            "password": password,
+                            "age": st.session_state.age,
+                            "weight": None
+                        },
+                        "history": {},
+                        "badges": [],
+                        "challenges": [],
+                        "daily_goal_ml": int(custom_goal * 1000),
+                        "settings": {
+                            "reminder_enabled": False,
+                            "reminder_minutes": 120,
+                            "reminder_start_time": "09:00"
+                        }
+                    }
+                    
+                    if "users" not in data:
+                        data["users"] = {}
+                    
+                    data["users"][name.strip()] = new_user
+                    
+                    if save_data(data):
+                        st.session_state.user = name.strip()
+                        st.success(f"🎉 Welcome {name}! Your account has been created!")
+                        st.balloons()
+                        st.session_state.page = "Dashboard"
+                        st.rerun()
+                    else:
+                        st.error("❌ Failed to save account. Please try again.")
 
-# Calculate and display recommended goal
-recommended_goal = calculate_daily_goal(st.session_state.age)
-st.info(f"💡 **Recommended daily water intake for your age:** {recommended_goal:.1f} litres")
-
-# Allow user to adjust the goal
-st.write("**Adjust your daily goal (optional):**")
-custom_goal = st.slider(
-"Daily water goal (litres):",
-min_value=0.5,
-max_value=5.0,
-value=float(recommended_goal),
-step=0.1
-)
-
-st.success(f"✅ Your daily goal is set to: **{custom_goal:.1f} litres** ({int(custom_goal * 1000)} ml)")
-
-if st.button("Create Account 🚀"):
-if not name.strip() or not password.strip():
-st.warning("⚠️ Please enter both username and password!")
-else:
-data = load_data()
-if name in data["users"]:
-st.error("❌ Username already exists! Try logging in instead.")
-else:
-st.session_state.user = name.strip()
-user = ensure_user(st.session_state.user, password)
-user["profile"]["age"] = st.session_state.age
-user["profile"]["password"] = password
-user["daily_goal_ml"] = int(custom_goal * 1000)
-
-update_user_data(st.session_state.user, user)
-
-st.success(f"🎉 Welcome {name}! Your account has been created!")
-st.balloons()
-st.session_state.page = "Dashboard"
-st.rerun()
-
-else: # Login mode
-if st.button("Login 🔑"):
-data = load_data()
-
-if name not in data["users"]:
-st.error("❌ User not found! Please sign up first.")
-elif data["users"][name]["profile"]["password"] != password:
-st.error("❌ Incorrect password! Please try again.")
-else:
-st.session_state.user = name
-st.success(f"✅ Welcome back, {name}! 💧")
-st.session_state.page = "Dashboard"
-st.rerun()
+    else:  # Login mode
+        if st.button("Login 🔑", key="login_btn"):
+            if not name.strip():
+                st.warning("⚠️ Please enter your username!")
+            elif not password.strip():
+                st.warning("⚠️ Please enter your password!")
+            else:
+                success, message = verify_user(name.strip(), password)
+                
+                if success:
+                    st.session_state.user = name.strip()
+                    st.success(f"✅ Welcome back, {name}! 💧")
+                    st.session_state.page = "Dashboard"
+                    st.rerun()
+                else:
+                    st.error(f"❌ {message}")
 
 # ---------- DASHBOARD ----------
 elif st.session_state.page == "Dashboard":
-navbar()
-user = get_user_data(st.session_state.user)
-st.header(f"📊 Dashboard — {user['profile']['name']}")
+    navbar()
+    user = get_user_data(st.session_state.user)
+    
+    if not user:
+        st.error("❌ User data not found. Please log in again.")
+        st.session_state.user = None
+        st.session_state.page = "Login"
+        st.rerun()
+    
+    st.header(f"📊 Dashboard — {user['profile']['name']}")
+    
+    st.markdown("### 💡 Hydration Tip of the Day")
+    st.info(random.choice(fun_facts))
+    
+    st.markdown("---")
 
-# Daily Hydration Tip
-st.markdown("### 💡 Hydration Tip of the Day")
-st.info(random.choice(fun_facts))
+    today_total = user["history"].get(today_str(), {}).get("total_ml", 0)
+    daily_goal = user.get("daily_goal_ml", 2000)
+    progress_percentage = (today_total / daily_goal) * 100
 
-st.markdown("---")
+    st.markdown(f"### {get_motivational_message(progress_percentage)}")
+    
+    bottle_fill_percentage = min(progress_percentage, 100)
+    st.markdown(f"""
+        <div style="text-align: center;">
+            <div style="
+                width: 150px;
+                height: 300px;
+                border: 4px solid #ffffff;
+                border-radius: 20px 20px 40px 40px;
+                position: relative;
+                margin: 20px auto;
+                box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+                background: linear-gradient(to top, #00BFFF {bottle_fill_percentage}%, transparent {bottle_fill_percentage}%);
+                overflow: hidden;
+            ">
+                <div style="
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    font-size: 24px;
+                    font-weight: bold;
+                    color: {'#ffffff' if bottle_fill_percentage > 50 else '#000000'};
+                    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+                ">
+                    {progress_percentage:.0f}%
+                </div>
+            </div>
+            <p style="color: white; font-size: 18px; font-weight: bold;">
+                {today_total} ml / {daily_goal} ml
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
 
-# Get today's data
-today_total = user["history"].get(today_str(), {}).get("total_ml", 0)
-daily_goal = user.get("daily_goal_ml", 2000)
-progress_percentage = (today_total / daily_goal) * 100
+    st.progress(min(progress_percentage / 100, 1.0))
 
-st.markdown(f"### {get_motivational_message(progress_percentage)}")
+    st.markdown("### 📊 Your Progress vs Target")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Current Intake", f"{today_total/1000:.2f} L", delta=f"{(today_total - daily_goal)/1000:.2f} L")
+    with col2:
+        st.metric("Daily Target", f"{daily_goal/1000:.2f} L")
+    with col3:
+        remaining = max(0, daily_goal - today_total)
+        st.metric("Remaining", f"{remaining/1000:.2f} L")
 
-# Animated water bottle visualization
-bottle_fill_percentage = min(progress_percentage, 100)
-st.markdown(f"""
-<div style="text-align: center;">
-<div style="
-width: 150px;
-height: 300px;
-border: 4px solid #ffffff;
-border-radius: 20px 20px 40px 40px;
-position: relative;
-margin: 20px auto;
-box-shadow: 0 8px 16px rgba(0,0,0,0.3);
-background: linear-gradient(to top, #00BFFF {bottle_fill_percentage}%, transparent {bottle_fill_percentage}%);
-overflow: hidden;
-">
-<div style="
-position: absolute;
-top: 50%;
-left: 50%;
-transform: translate(-50%, -50%);
-font-size: 24px;
-font-weight: bold;
-color: {'#ffffff' if bottle_fill_percentage > 50 else '#000000'};
-text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-">
-{progress_percentage:.0f}%
-</div>
-</div>
-<p style="color: white; font-size: 18px; font-weight: bold;">
-{today_total} ml / {daily_goal} ml
-</p>
-</div>
-""", unsafe_allow_html=True)
+    st.markdown("---")
 
-# Progress bar
-st.progress(min(progress_percentage / 100, 1.0))
+    st.markdown("### 📈 Your 7-Day Hydration History")
+    fig = plot_7day_intake(user)
+    st.pyplot(fig)
+    plt.close()
 
-# COMPARISON: Current vs Target
-st.markdown("### 📊 Your Progress vs Target")
-col1, col2, col3 = st.columns(3)
-with col1:
-st.metric("Current Intake", f"{today_total/1000:.2f} L", delta=f"{(today_total - daily_goal)/1000:.2f} L")
-with col2:
-st.metric("Daily Target", f"{daily_goal/1000:.2f} L")
-with col3:
-remaining = max(0, daily_goal - today_total)
-st.metric("Remaining", f"{remaining/1000:.2f} L")
+    st.markdown("---")
+    st.subheader("🔄 Reset Today's Progress")
+    st.warning("⚠️ This will clear all water intake logged for today.")
+    
+    col_reset1, col_reset2 = st.columns([3, 1])
+    with col_reset2:
+        if st.button("🗑️ Reset Today", type="primary", key="reset_btn"):
+            today = today_str()
+            if today in user["history"]:
+                user["history"][today] = {"total_ml": 0, "entries": []}
+                if update_user_data(st.session_state.user, user):
+                    st.success("✅ Today's progress has been reset!")
+                    st.rerun()
+            else:
+                st.info("No data found for today.")
 
-st.markdown("---")
-
-# Past 7 days graph using Matplotlib
-st.markdown("### 📈 Your 7-Day Hydration History")
-fig = plot_7day_intake(user)
-st.pyplot(fig)
-plt.close()
-
-# Reset button for today
-st.markdown("---")
-st.subheader("🔄 Reset Today's Progress")
-st.warning("⚠️ This will clear all water intake logged for today. Use this if you made a mistake or want to start fresh.")
-
-col_reset1, col_reset2 = st.columns([3, 1])
-with col_reset2:
-if st.button("🗑️ Reset Today", type="primary"):
-today = today_str()
-if today in user["history"]:
-user["history"][today] = {"total_ml": 0, "entries": []}
-update_user_data(st.session_state.user, user)
-st.success("✅ Today's progress has been reset!")
-st.rerun()
-else:
-st.info("No data found for today.")
 # ---------- LOG WATER ----------
 elif st.session_state.page == "Log Water":
-navbar()
-user = get_user_data(st.session_state.user) # FIX: Get fresh data
-st.header("💧 Log Water Intake")
+    navbar()
+    user = get_user_data(st.session_state.user)
+    
+    if not user:
+        st.error("❌ User data not found. Please log in again.")
+        st.session_state.user = None
+        st.session_state.page = "Login"
+        st.rerun()
+    
+    st.header("💧 Log Water Intake")
 
-# Get today's data
-today_total = user["history"].get(today_str(), {}).get("total_ml", 0)
-daily_goal = user.get("daily_goal_ml", 2000)
-progress_percentage = (today_total / daily_goal) * 100
+    today_total = user["history"].get(today_str(), {}).get("total_ml", 0)
+    daily_goal = user.get("daily_goal_ml", 2000)
+    progress_percentage = (today_total / daily_goal) * 100
 
-# FEATURE 2: Quick log buttons for common amounts
-st.markdown("### ⚡ Quick Log (Tap to Add)")
-col1, col2, col3, col4, col5 = st.columns(5)
+    st.markdown("### ⚡ Quick Log (Tap to Add)")
+    col1, col2, col3, col4, col5 = st.columns(5)
+    
+    quick_amounts = [100, 200, 250, 330, 500]
+    amount = None
+    
+    if col1.button(f"💧 {quick_amounts[0]} ml", use_container_width=True, key="q1"): amount = quick_amounts[0]
+    if col2.button(f"💧 {quick_amounts[1]} ml", use_container_width=True, key="q2"): amount = quick_amounts[1]
+    if col3.button(f"💧 {quick_amounts[2]} ml", use_container_width=True, key="q3"): amount = quick_amounts[2]
+    if col4.button(f"💧 {quick_amounts[3]} ml", use_container_width=True, key="q4"): amount = quick_amounts[3]
+    if col5.button(f"💧 {quick_amounts[4]} ml", use_container_width=True, key="q5"): amount = quick_amounts[4]
 
-quick_amounts = [100, 200, 250, 330, 500]
-amount = None
+    st.markdown("### 🎯 Custom Amount")
+    custom = st.number_input("Enter custom amount (ml):", min_value=50, max_value=2000, value=250, step=50, key="custom_input")
+    
+    if st.button("➕ Add Custom Amount", type="primary", use_container_width=True, key="add_custom"):
+        amount = custom
 
-if col1.button(f"💧 {quick_amounts[0]} ml", use_container_width=True): amount = quick_amounts[0]
-if col2.button(f"💧 {quick_amounts[1]} ml", use_container_width=True): amount = quick_amounts[1]
-if col3.button(f"💧 {quick_amounts[2]} ml", use_container_width=True): amount = quick_amounts[2]
-if col4.button(f"💧 {quick_amounts[3]} ml", use_container_width=True): amount = quick_amounts[3]
-if col5.button(f"💧 {quick_amounts[4]} ml", use_container_width=True): amount = quick_amounts[4]
+    if amount:
+        ds = today_str()
+        if ds not in user["history"]:
+            user["history"][ds] = {"total_ml": 0, "entries": []}
+        
+        now = datetime.now()
+        time_24hr = now.strftime("%H:%M:%S")
+        time_12hr = now.strftime("%I:%M %p")
+        
+        user["history"][ds]["entries"].append({
+            "time": time_24hr,
+            "time_display": time_12hr,
+            "ml": int(amount),
+            "timestamp": now.isoformat()
+        })
+        user["history"][ds]["total_ml"] += int(amount)
+        
+        if update_user_data(st.session_state.user, user):
+            st.success(f"✅ Added {amount} ml at {time_12hr}!")
+            st.balloons()
+            st.rerun()
+        else:
+            st.error("❌ Failed to save. Please try again.")
 
-st.markdown("### 🎯 Custom Amount")
-custom = st.number_input("Enter custom amount (ml):", min_value=50, max_value=2000, value=250, step=50)
+    st.markdown("---")
 
-if st.button("➕ Add Custom Amount", type="primary", use_container_width=True):
-amount = custom
+    st.markdown("### 📊 Today's Progress")
+    
+    mascot_path = get_mascot_image(progress_percentage)
+    motivational_msg = get_motivational_message(progress_percentage)
+    
+    col_mascot, col_progress = st.columns([1, 2])
+    
+    with col_mascot:
+        if os.path.exists(mascot_path):
+            st.image(mascot_path, width=200)
+        st.markdown(f"**{motivational_msg}**")
+    
+    with col_progress:
+        bottle_fill = min(progress_percentage, 100)
+        st.markdown(f"""
+            <div style="text-align: center;">
+                <div style="
+                    width: 120px;
+                    height: 240px;
+                    border: 3px solid #ffffff;
+                    border-radius: 15px 15px 30px 30px;
+                    position: relative;
+                    margin: 10px auto;
+                    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+                    background: linear-gradient(to top, #00BFFF {bottle_fill}%, transparent {bottle_fill}%);
+                ">
+                    <div style="
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        font-size: 20px;
+                        font-weight: bold;
+                        color: {'#ffffff' if bottle_fill > 50 else '#000000'};
+                    ">
+                        {progress_percentage:.0f}%
+                    </div>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        st.progress(min(progress_percentage / 100, 1.0))
+        st.markdown(f"<h3 style='text-align:center;'>{today_total} ml / {daily_goal} ml</h3>", unsafe_allow_html=True)
 
-# Process the logged water
-if amount:
-ds = today_str()
-if ds not in user["history"]:
-user["history"][ds] = {"total_ml": 0, "entries": []}
-tnow = datetime.now().strftime("%H:%M:%S")
-user["history"][ds]["entries"].append({"time": tnow, "ml": int(amount)})
-user["history"][ds]["total_ml"] += int(amount)
-update_user_data(st.session_state.user, user) # FIX: Use update function
-st.success(f"✅ Added {amount} ml at {tnow}!")
-st.balloons()
-st.rerun()
-
-st.markdown("---")
-
-
-# FEATURE 3: Real-time visual feedback
-st.markdown("### 📊 Today's Progress")
-
-# Mascot image based on progress (FEATURE 4)
-mascot_path = get_mascot_image(progress_percentage)
-motivational_msg = get_motivational_message(progress_percentage)
-
-col_mascot, col_progress = st.columns([1, 2])
-
-with col_mascot:
-if os.path.exists(mascot_path):
-st.image(mascot_path, width=200)
-st.markdown(f"**{motivational_msg}**")
-
-with col_progress:
-# Animated bottle
-bottle_fill = min(progress_percentage, 100)
-st.markdown(f"""
-<div style="text-align: center;">
-<div style="
-width: 120px;
-height: 240px;
-border: 3px solid #ffffff;
-border-radius: 15px 15px 30px 30px;
-position: relative;
-margin: 10px auto;
-box-shadow: 0 6px 12px rgba(0,0,0,0.3);
-background: linear-gradient(to top, #00BFFF {bottle_fill}%, transparent {bottle_fill}%);
-">
-<div style="
-position: absolute;
-top: 50%;
-left: 50%;
-transform: translate(-50%, -50%);
-font-size: 20px;
-font-weight: bold;
-color: {'#ffffff' if bottle_fill > 50 else '#000000'};
-">
-{progress_percentage:.0f}%
-</div>
-</div>
-</div>
-""", unsafe_allow_html=True)
-
-st.progress(min(progress_percentage / 100, 1.0))
-st.markdown(f"<h3 style='text-align:center;'>{today_total} ml / {daily_goal} ml</h3>", unsafe_allow_html=True)
-
-# Show recent entries - FIX: Better time display with sorting
-st.markdown("---")
-st.markdown("### 📝 Today's Log History")
-if today_str() in user["history"] and user["history"][today_str()]["entries"]:
-entries = user["history"][today_str()]["entries"]
-
-# Sort entries by timestamp if available, otherwise by time
-try:
-sorted_entries = sorted(entries, key=lambda x: x.get("timestamp", x.get("time", "")), reverse=True)
-except:
-sorted_entries = entries[::-1] # Just reverse if sorting fails
-
-# Display last 10 entries
-st.markdown("""
-<style>
-.log-entry {
-background: rgba(255, 255, 255, 0.1);
-padding: 10px 15px;
-margin: 5px 0;
-border-radius: 10px;
-border-left: 4px solid #00BFFF;
-}
-</style>
-""", unsafe_allow_html=True)
-
-for entry in sorted_entries[:10]:
-# Try to use display time first, fallback to converting 24hr time
-if "time_display" in entry:
-display_time = entry["time_display"]
-else:
-# Convert old format times to 12-hour format
-try:
-time_obj = datetime.strptime(entry['time'], "%H:%M:%S")
-display_time = time_obj.strftime("%I:%M %p")
-except:
-display_time = entry['time']
-
-st.markdown(f"""
-<div class='log-entry'>
-🕒 <strong>{display_time}</strong> — <strong>{entry['ml']} ml</strong>
-</div>
-""", unsafe_allow_html=True)
-else:
-st.info("No water logged yet today. Start now!")
-
+    st.markdown("---")
+    st.markdown("### 📝 Today's Log History")
+    if today_str() in user["history"] and user["history"][today_str()]["entries"]:
+        entries = user["history"][today_str()]["entries"]
+        
+        try:
+            sorted_entries = sorted(entries, key=lambda x: x.get("timestamp", x.get("time", "")), reverse=True)
+        except:
+            sorted_entries = entries[::-1]
+        
+        for entry in sorted_entries[:10]:
+            if "time_display" in entry:
+                display_time = entry["time_display"]
+            else:
+                try:
+                    time_obj = datetime.strptime(entry['time'], "%H:%M:%S")
+                    display_time = time_obj.strftime("%I:%M %p")
+                except:
+                    display_time = entry['time']
+            
+            st.markdown(f"""
+                <div class='log-entry'>
+                    🕒 <strong>{display_time}</strong> — <strong>{entry['ml']} ml</strong>
+                </div>
+            """, unsafe_allow_html=True)
+    else:
+        st.info("No water logged yet today. Start now!")
 
 # ---------- CHALLENGES ----------
 elif st.session_state.page == "Challenges":
-navbar()
-user = get_user_data(st.session_state.user)
-st.header("🏁 Hydration Challenges")
+    navbar()
+    user = get_user_data(st.session_state.user)
+    
+    if not user:
+        st.error("❌ User data not found. Please log in again.")
+        st.session_state.user = None
+        st.session_state.page = "Login"
+        st.rerun()
+    
+    st.header("🏁 Hydration Challenges")
 
-st.markdown("### 🎯 Create a New Challenge")
-ch_name = st.text_input("Challenge name:", placeholder="e.g., Weekend Warrior, Week of Wellness")
-days = st.slider("Duration (days)", 1, 30, 7)
-daily_goal = st.slider("Daily goal (litres)", 0.5, 5.0, 2.0, 0.25)
+    st.markdown("### 🎯 Create a New Challenge")
+    ch_name = st.text_input("Challenge name:", placeholder="e.g., Weekend Warrior, Week of Wellness", key="ch_name")
+    days = st.slider("Duration (days)", 1, 30, 7, key="ch_days")
+    daily_goal = st.slider("Daily goal (litres)", 0.5, 5.0, 2.0, 0.25, key="ch_goal")
+    
+    if st.button("🚀 Create Challenge", type="primary", key="create_ch"):
+        if not ch_name.strip():
+            ch_name = f"{daily_goal}L for {days} days"
+        
+        user["challenges"].append({
+            "name": ch_name,
+            "days": days,
+            "goal": daily_goal,
+            "start": today_str(),
+            "done": False
+        })
+        
+        if update_user_data(st.session_state.user, user):
+            st.success(f"✅ Challenge '{ch_name}' created!")
+            st.balloons()
+            st.rerun()
 
-if st.button("🚀 Create Challenge", type="primary"):
-if not ch_name.strip():
-ch_name = f"{daily_goal}L for {days} days"
-user["challenges"].append({
-"name": ch_name,
-"days": days,
-"goal": daily_goal,
-"start": today_str(),
-"done": False
-})
-update_user_data(st.session_state.user, user)
-st.success(f"✅ Challenge '{ch_name}' created!")
-st.balloons()
-st.rerun()
-
-st.markdown("---")
-
-# Display active challenges
-if user["challenges"]:
-st.subheader("🎮 Your Active Challenges")
-for idx, ch in enumerate(user["challenges"]):
-status = "✅ Completed" if ch.get("done", False) else "🔥 In Progress"
-with st.expander(f"{status} — {ch.get('name', 'Unnamed Challenge')}"):
-st.write(f"**Duration:** {ch.get('days', '?')} days")
-st.write(f"**Daily Goal:** {ch.get('goal', '?')} L")
-st.write(f"**Started:** {ch.get('start', '?')}")
-
-if not ch.get("done", False):
-if st.button(f"Mark as Complete", key=f"complete_{idx}"):
-user["challenges"][idx]["done"] = True
-badge_name = f"✅ Completed: {ch['name']}"
-if badge_name not in user["badges"]:
-user["badges"].append(badge_name)
-update_user_data(st.session_state.user, user)
-st.success("🎉 Challenge completed!")
-st.rerun()
-else:
-st.info("💡 No challenges yet. Create one to stay motivated!")
-
+    st.markdown("---")
+    
+    if user["challenges"]:
+        st.subheader("🎮 Your Active Challenges")
+        for idx, ch in enumerate(user["challenges"]):
+            status = "✅ Completed" if ch.get("done", False) else "🔥 In Progress"
+            with st.expander(f"{status} — {ch.get('name', 'Unnamed Challenge')}"):
+                st.write(f"**Duration:** {ch.get('days', '?')} days")
+                st.write(f"**Daily Goal:** {ch.get('goal', '?')} L")
+                st.write(f"**Started:** {ch.get('start', '?')}")
+                
+                if not ch.get("done", False):
+                    if st.button(f"Mark as Complete", key=f"complete_{idx}"):
+                        user["challenges"][idx]["done"] = True
+                        badge_name = f"✅ Completed: {ch['name']}"
+                        if badge_name not in user["badges"]:
+                            user["badges"].append(badge_name)
+                        
+                        if update_user_data(st.session_state.user, user):
+                            st.success("🎉 Challenge completed!")
+                            st.rerun()
+    else:
+        st.info("💡 No challenges yet. Create one to stay motivated!")
 # ---------- BADGES ----------
 elif st.session_state.page == "Badges":
 navbar()
@@ -976,5 +922,6 @@ st.warning("⚠️ Please confirm before deleting your data.")
 
 # ---------- SAVE ----------
 save_data(data)
+
 
 
