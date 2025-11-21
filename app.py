@@ -383,7 +383,7 @@ if st.session_state.page == "Login":
                     st.session_state.user = username
                     st.success(f"✅ Welcome back, {username}! 💧")
                     st.session_state.page = "Dashboard"
-                    st.experimental_rerun()
+                    st.rerun()
                 else:
                     st.error(f"❌ {msg}")
 
@@ -395,7 +395,7 @@ elif st.session_state.page == "Dashboard":
         st.error("❌ User data not found. Please log in again.")
         st.session_state.user = None
         st.session_state.page = "Login"
-        st.experimental_rerun()
+        st.rerun()
 
     st.header(f"📊 Dashboard — {user['profile'].get('name', '')}")
     st.markdown("### 💡 Hydration Tip of the Day")
@@ -482,7 +482,7 @@ elif st.session_state.page == "Log Water":
         st.error("❌ User data not found. Please log in again.")
         st.session_state.user = None
         st.session_state.page = "Login"
-        st.experimental_rerun()
+        st.rerun()
 
     st.header("💧 Log Water Intake")
     today_total = user.get("history", {}).get(today_str(), {}).get("total_ml", 0)
@@ -523,7 +523,7 @@ elif st.session_state.page == "Log Water":
         if update_user_data(st.session_state.user, user):
             st.success(f"✅ Added {amount} ml at {time_12hr}!")
             st.balloons()
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("❌ Failed to save. Please try again.")
 
@@ -613,7 +613,7 @@ elif st.session_state.page == "Challenges":
         if update_user_data(st.session_state.user, user):
             st.success(f"✅ Challenge '{ch_name}' created!")
             st.balloons()
-            st.experimental_rerun()
+            st.rerun()
 
     st.markdown("---")
     if user.get("challenges"):
@@ -632,7 +632,7 @@ elif st.session_state.page == "Challenges":
                             user.setdefault("badges", []).append(badge_name)
                         if update_user_data(st.session_state.user, user):
                             st.success("🎉 Challenge completed!")
-                            st.experimental_rerun()
+                            st.rerun()
     else:
         st.info("💡 No challenges yet. Create one to stay motivated!")
 
@@ -644,7 +644,7 @@ elif st.session_state.page == "Badges":
         st.error("❌ User data not found. Please log in again.")
         st.session_state.user = None
         st.session_state.page = "Login"
-        st.experimental_rerun()
+        st.rerun()
 
     st.markdown("<h2 style='color:#FFD166;'>🏅 Your Badges & Achievements</h2>", unsafe_allow_html=True)
 
@@ -849,7 +849,7 @@ elif st.session_state.page == "Settings":
         st.session_state.last_reminder_time = None
         st.session_state.reminder_dismissed = False
         st.success("✅ Logged out successfully!")
-        st.experimental_rerun()
+        st.rerun()
 
     st.markdown("---")
     st.subheader("🗑️ Reset All Data")
@@ -866,7 +866,8 @@ elif st.session_state.page == "Settings":
                 st.session_state.last_reminder_time = None
                 st.session_state.reminder_dismissed = False
                 st.success("✅ All your data has been deleted.")
-                st.experimental_rerun()
+                st.rerun()
         else:
             st.warning("⚠️ Please confirm before deleting your data.")
+
 
