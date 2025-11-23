@@ -306,11 +306,9 @@ if st.session_state.page == "Login":
     password = st.text_input("Password:", type="password")
 
     if mode == "Sign Up":
-# --- AGE SELECTION (Buttons + Manual Input) ---
-st.markdown("### 🎂 Tell us about yourself")
-st.write("**Select your age:**")
-
-col1, col2, col3 = st.columns([1, 2, 1])
+        st.markdown("### 🎂 Tell us about yourself")
+        st.write("**Select your age:**")
+        col1, col2, col3 = st.columns([1, 2, 1])
 
 with col1:
     if st.button("➖", key="minus_age") and st.session_state.age > 1:
@@ -891,5 +889,6 @@ elif st.session_state.page == "Settings":
                 st.rerun()
         else:
             st.warning("⚠️ Please confirm before deleting your data.")
+
 
 
