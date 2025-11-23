@@ -410,89 +410,80 @@ with col3:
 # ---------- DASHBOARD ----------
 elif st.session_state.page == "Dashboard":
     navbar()
-    user = get_user_data(st.session_state.user)
+    uname = st.session_state.user
+    user = get_user(uname)
     if not user:
-        st.error("❌ User data not found. Please log in again.")
+        st.error("User not found — login again.")
         st.session_state.user = None
         st.session_state.page = "Login"
         st.rerun()
 
-    st.header(f"📊 Dashboard — {user['profile'].get('name', '')}")
-    st.markdown("### 💡 Hydration Tip of the Day")
-    st.info(random.choice(fun_facts))
-    st.markdown("---")
-
-    today_total = user.get("history", {}).get(today_str(), {}).get("total_ml", 0)
+    profile = user.get("profile", {})
     daily_goal = user.get("daily_goal_ml", 2000)
+    today_total = get_daily_total(uname)
     progress_percentage = (today_total / daily_goal) * 100 if daily_goal else 0
+
+    st.header(f"📊 Dashboard — {profile.get('name', uname)}")
+    st.markdown("### 💡 Hydration Tip of the Day")
+    FUN = [
+        "💧 Drinking water can boost your mood and energy levels instantly!",
+        "🌿 Your brain is around 75% water — stay hydrated to stay sharp!",
+        "🚰 You lose about 1 litre of water every day just by breathing and sweating."
+    ]
+    st.info(random.choice(FUN))
+    st.markdown("---")
 
     st.markdown(f"### {get_motivational_message(progress_percentage)}")
 
     bottle_fill_percentage = min(progress_percentage, 100)
     st.markdown(f"""
-        <div style="text-align: center;">
-            <div style="
-                width: 150px;
-                height: 300px;
-                border: 4px solid #ffffff;
-                border-radius: 20px 20px 40px 40px;
-                position: relative;
-                margin: 20px auto;
-                box-shadow: 0 8px 16px rgba(0,0,0,0.3);
-                background: linear-gradient(to top, #00BFFF {bottle_fill_percentage}%, transparent {bottle_fill_percentage}%);
-                overflow: hidden;
-            ">
-                <div style="
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    font-size: 24px;
-                    font-weight: bold;
-                    color: {'#ffffff' if bottle_fill_percentage > 50 else '#000000'};
-                    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-                ">
+        <div style="text-align:center;">
+            <div style="width:150px;height:300px;border:4px solid #fff;border-radius:20px 20px 40px 40px;margin:20px auto;
+                        background: linear-gradient(to top, #00BFFF {bottle_fill_percentage}%, transparent {bottle_fill_percentage}%);">
+                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+                            font-size:24px;font-weight:bold;color:{'#fff' if bottle_fill_percentage>50 else '#000'};">
                     {progress_percentage:.0f}%
                 </div>
             </div>
-            <p style="color: white; font-size: 18px; font-weight: bold;">
-                {today_total} ml / {daily_goal} ml
-            </p>
+            <p style="color:white;font-size:18px;font-weight:bold;">{today_total} ml / {daily_goal} ml</p>
         </div>
     """, unsafe_allow_html=True)
 
-    st.progress(min(progress_percentage / 100, 1.0))
-    st.markdown("### 📊 Your Progress vs Target")
+    st.progress(min(progress_percentage/100, 1.0))
     col1, col2, col3 = st.columns(3)
     with col1:
         st.metric("Current Intake", f"{today_total/1000:.2f} L", delta=f"{(today_total - daily_goal)/1000:.2f} L")
     with col2:
         st.metric("Daily Target", f"{daily_goal/1000:.2f} L")
     with col3:
-        remaining = max(0, daily_goal - today_total)
-        st.metric("Remaining", f"{remaining/1000:.2f} L")
-    st.markdown("---")
+        st.metric("Remaining", f"{max(0, daily_goal - today_total)/1000:.2f} L")
 
+    st.markdown("---")
     st.markdown("### 📈 Your 7-Day Hydration History")
-    fig = plot_7day_intake(user)
+    history = get_7day_history(uname)
+    fig = plot_7day_intake_from_history(history, daily_goal)
     st.pyplot(fig)
     plt.close()
 
     st.markdown("---")
     st.subheader("🔄 Reset Today's Progress")
-    st.warning("⚠️ This will clear all water intake logged for today.")
-    _, col_reset = st.columns([3, 1])
-    if col_reset.button("🗑️ Reset Today", type="primary", key="reset_btn"):
-        today = today_str()
-        if today in user.get("history", {}):
-            user["history"][today] = {"total_ml": 0, "entries": []}
-            if update_user_data(st.session_state.user, user):
-                st.success("✅ Today's progress has been reset!")
-                st.rerun()
-            else:
-                st.error("❌ Failed to save reset.")
-        else:
-            st.info("No data found for today.")
+    if st.button("🗑️ Reset Today"):
+        # delete today's logs
+        today_str = date.today().isoformat()
+        docs = user_doc_ref(uname).collection(LOGS_COL).where("date", "==", today_str).stream()
+        deleted = 0
+        for d in docs:
+            d.reference.delete()
+            deleted += 1
+        # remove date from history_dates index
+        ref = user_doc_ref(uname)
+        doc = ref.get().to_dict()
+        dates = set(doc.get("history_dates", []))
+        if today_str in dates:
+            dates.remove(today_str)
+            ref.update({"history_dates": list(dates)})
+        st.success("Today's data cleared.")
+        st.rerun()
 
 # ---------- LOG WATER ----------
 elif st.session_state.page == "Log Water":
@@ -889,6 +880,7 @@ elif st.session_state.page == "Settings":
                 st.rerun()
         else:
             st.warning("⚠️ Please confirm before deleting your data.")
+
 
 
 
