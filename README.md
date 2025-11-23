@@ -6,10 +6,6 @@ It provides personalized goals, dynamic progress tracking, hydration analytics, 
 Project Overview
 
 In today’s fast-moving environment, many individuals forget to stay hydrated. This leads to fatigue, headaches, poor focus, and long-term health risks.
-HydroLife solves this by offering:
+SipSmart solves this by offering:
 
-A clean and simple interface
-Personalized hydration goal
-Quick water logging
-Real-time progress update
-Fun and motivational features
+A clean and simple interface, Personalized hydration goal, Quick water logging, Real-time progress update, Fun and motivational features
