@@ -183,18 +183,29 @@ reminder_messages = [
     "A quick glass of water can boost your focus — try it now!"
 ]
 
-fun_facts = [
-    "💧 Drinking water can boost your mood and energy levels instantly!",
-    "🌿 Your brain is around 75% water — stay hydrated to stay sharp!",
-    "🚰 You lose about 1 litre of water every day just by breathing and sweating.",
-    "🧊 Cold water can slightly increase your metabolism as your body warms it up!",
-    "💦 Drinking enough water can improve your skin's glow naturally.",
-    "🥤 Sometimes thirst feels like hunger — drinking water first can prevent overeating.",
-    "🏃‍♀️ Proper hydration helps your muscles work more efficiently during workouts.",
-    "🕐 Even mild dehydration (1-2%) can reduce your focus and concentration levels.",
-    "🌊 Water helps regulate body temperature and flush out toxins.",
-    "🍉 Hydrating foods like watermelon, cucumber, and oranges help boost your intake!"
+FUN = [
+    "💧 Drinking water boosts your brain power!",
+    "🌊 Staying hydrated keeps your skin glowing and fresh!",
+    "🚀 Small sips throughout the day keep your energy steady!",
+    "🥤 Your body is nearly 60% water—keep it filled!",
+    "⚡ Water helps your body maintain the perfect temperature!",
+    "🔥 Even slight dehydration can reduce your focus!",
+    "🧠 Your brain is 75% water — drink up for sharper thinking!",
+    "💙 Drinking water improves your mood instantly!",
+    "🏃‍♂️ Muscles work better when they are hydrated!",
+    "👀 Water keeps your eyes from feeling dry and tired!",
+    "💦 Drinking a glass of water in the morning boosts metabolism!",
+    "🫀 Staying hydrated helps your heart pump blood smoothly!",
+    "🌱 Plants need water to grow — and so do you!",
+    "🎯 Hydration improves concentration and memory!",
+    "🥗 Sometimes thirst feels like hunger — water helps fix it!",
+    "💤 Drinking enough water improves your sleep quality!",
+    "🌤️ Hot weather increases your water needs—sip often!",
+    "🍋 Adding lemon to water boosts Vitamin C intake!",
+    "📚 Hydrated students perform better in studies!",
+    "🙂 Drinking water reduces stress and anxiety levels!"
 ]
+
 
 # ---------- HELPER FUNCTIONS MISSING IN ORIGINAL ----------
 def get_user_data(username):
@@ -875,3 +886,4 @@ elif st.session_state.page == "Settings":
                 st.rerun()
         else:
             st.warning("⚠️ Please confirm before deleting your data.")
+
