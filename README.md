@@ -9,11 +9,7 @@ In today’s fast-moving environment, many individuals forget to stay hydrated. 
 HydroLife solves this by offering:
 
 A clean and simple interface
-
-Personalized hydration goals
-
+Personalized hydration goal
 Quick water logging
-
-Real-time progress updates
-
+Real-time progress update
 Fun and motivational features
