@@ -196,54 +196,7 @@ fun_facts = [
     "🍉 Hydrating foods like watermelon, cucumber, and oranges help boost your intake!"
 ]
 
-# ---------- MATPLOTLIB GRAPH ----------
-def plot_7day_intake(user):
-    daily_goal = user.get("daily_goal_ml", 2000)
-    dates = []
-    actual_intake = []
-    target_intake = []
-    date_labels = []
-    for d in range(6, -1, -1):
-        dd = date.today() - timedelta(days=d)
-        dates.append(dd)
-        day_data = user.get("history", {}).get(dd.isoformat(), {})
-        actual_ml = day_data.get("total_ml", 0)
-        actual_intake.append(actual_ml / 1000)
-        target_intake.append(daily_goal / 1000)
-        date_labels.append(dd.strftime("%m/%d"))
-    fig, ax = plt.subplots(figsize=(10, 4))
-    x = range(len(dates))
-    width = 0.35
-    bars1 = ax.bar([i - width/2 for i in x], actual_intake, width, label='Actual Intake')
-    bars2 = ax.bar([i + width/2 for i in x], target_intake, width, label='Daily Target', alpha=0.6)
-    ax.set_xlabel('Date', fontsize=10)
-    ax.set_ylabel('Litres', fontsize=10)
-    ax.set_title('Your Intake vs Daily Target (Past 7 Days)', fontsize=12)
-    ax.set_xticks(x)
-    ax.set_xticklabels(date_labels, fontsize=9)
-    ax.legend()
-    ax.grid(True, alpha=0.2)
-    for bars in (bars1, bars2):
-        for bar in bars:
-            height = bar.get_height()
-            if height > 0:
-                ax.text(bar.get_x() + bar.get_width()/2., height, f'{height:.1f}L', ha='center', va='bottom', fontsize=8)
-    plt.tight_layout()
-    return fig
-
-# ---------- NAVBAR ----------
-def navbar():
-    pages = ["Dashboard", "Log Water", "Challenges", "Badges", "Settings"]
-    cols = st.columns(len(pages))
-    for i, p in enumerate(pages):
-        if st.session_state.page == p:
-            cols[i].markdown(f"**➡️ {p}**")
-        elif cols[i].button(p, key=f"nav_{p}"):
-            st.session_state.page = p
-            st.rerun()
-    st.markdown("---")
-
-# ---------- USER MANAGEMENT ----------
+# ---------- HELPER FUNCTIONS MISSING IN ORIGINAL ----------
 def get_user_data(username):
     data = load_data()
     if not username:
@@ -295,6 +248,69 @@ def verify_user(username, password):
     else:
         return False, "Incorrect password"
 
+def get_daily_total(username, target_date=None):
+    user = get_user_data(username)
+    if not user:
+        return 0
+    if target_date is None:
+        target_date = today_str()
+    return user.get("history", {}).get(target_date, {}).get("total_ml", 0)
+
+def get_7day_history(username):
+    user = get_user_data(username)
+    if not user:
+        return {}
+    history = {}
+    for d in range(6, -1, -1):
+        dd = date.today() - timedelta(days=d)
+        history[dd.isoformat()] = user.get("history", {}).get(dd.isoformat(), {"total_ml": 0, "entries": []})
+    return history
+
+def plot_7day_intake_from_history(history, daily_goal_ml):
+    # history: dict keyed by iso date with total_ml
+    dates = []
+    actual_intake = []
+    target_intake = []
+    date_labels = []
+    for d_iso, v in history.items():
+        dd = datetime.strptime(d_iso, "%Y-%m-%d").date()
+        dates.append(dd)
+        actual_ml = v.get("total_ml", 0)
+        actual_intake.append(actual_ml / 1000)
+        target_intake.append(daily_goal_ml / 1000)
+        date_labels.append(dd.strftime("%m/%d"))
+    fig, ax = plt.subplots(figsize=(10, 4))
+    x = range(len(dates))
+    width = 0.35
+    bars1 = ax.bar([i - width/2 for i in x], actual_intake, width, label='Actual Intake')
+    bars2 = ax.bar([i + width/2 for i in x], target_intake, width, label='Daily Target', alpha=0.6)
+    ax.set_xlabel('Date', fontsize=10)
+    ax.set_ylabel('Litres', fontsize=10)
+    ax.set_title('Your Intake vs Daily Target (Past 7 Days)', fontsize=12)
+    ax.set_xticks(x)
+    ax.set_xticklabels(date_labels, fontsize=9)
+    ax.legend()
+    ax.grid(True, alpha=0.2)
+    for bars in (bars1, bars2):
+        for bar in bars:
+            height = bar.get_height()
+            if height > 0:
+                ax.text(bar.get_x() + bar.get_width()/2., height, f'{height:.1f}L', ha='center', va='bottom', fontsize=8)
+    plt.tight_layout()
+    return fig
+
+# ---------- NAVBAR ----------
+def navbar():
+    pages = ["Dashboard", "Log Water", "Challenges", "Badges", "Settings"]
+    cols = st.columns(len(pages))
+    for i, p in enumerate(pages):
+        if st.session_state.page == p:
+            cols[i].markdown(f"**➡️ {p}**")
+        elif cols[i].button(p, key=f"nav_{p}"):
+            st.session_state.page = p
+            st.rerun()
+    st.markdown("---")
+
 # ---------- LOGIN / SIGN UP ----------
 if st.session_state.page == "Login":
     st.markdown("<h1 style='color:white;text-align:center;font-size:48px;'>💧 Welcome to WaterBuddy!</h1>", unsafe_allow_html=True)
@@ -309,37 +325,30 @@ if st.session_state.page == "Login":
         st.markdown("### 🎂 Tell us about yourself")
         st.write("**Select your age:**")
         col1, col2, col3 = st.columns([1, 2, 1])
+        with col1:
+            if st.button("➖", key="minus_age") and st.session_state.age > 1:
+                st.session_state.age -= 1
+                st.rerun()
+        with col2:
+            typed_age = st.number_input(
+                "or type age:",
+                min_value=1,
+                max_value=120,
+                value=st.session_state.age,
+                key="typed_age_input"
+            )
+            if typed_age != st.session_state.age:
+                st.session_state.age = int(typed_age)
+            st.markdown(
+                f"<h2 style='text-align:center;color:white;'>{st.session_state.age} years old</h2>",
+                unsafe_allow_html=True
+            )
+        with col3:
+            if st.button("➕", key="plus_age") and st.session_state.age < 120:
+                st.session_state.age += 1
+                st.rerun()
 
-with col1:
-    if st.button("➖", key="minus_age") and st.session_state.age > 1:
-        st.session_state.age -= 1
-        st.rerun()
-
-with col2:
-    # Manual age input
-    typed_age = st.number_input(
-        "or type age:",
-        min_value=1,
-        max_value=120,
-        value=st.session_state.age,
-        key="typed_age_input"
-    )
-
-    # Sync typed age with session_state
-    if typed_age != st.session_state.age:
-        st.session_state.age = typed_age
-
-    # Display final age
-    st.markdown(
-        f"<h2 style='text-align:center;color:white;'>{st.session_state.age} years old</h2>",
-        unsafe_allow_html=True
-    )
-
-with col3:
-    if st.button("➕", key="plus_age") and st.session_state.age < 120:
-        st.session_state.age += 1
-        st.rerun()
-
+        # recommended goal and custom slider (placed outside column blocks)
         recommended_goal = calculate_daily_goal(st.session_state.age)
         st.info(f"💡 **Recommended daily water intake for your age:** {recommended_goal:.1f} litres")
 
@@ -391,6 +400,7 @@ with col3:
                     else:
                         st.error("❌ Failed to save account. Please try again.")
     else:
+        # LOGIN flow
         if st.button("Login 🔑", key="login_btn"):
             if not name or not name.strip():
                 st.warning("⚠️ Please enter your username!")
@@ -411,7 +421,7 @@ with col3:
 elif st.session_state.page == "Dashboard":
     navbar()
     uname = st.session_state.user
-    user = get_user(uname)
+    user = get_user_data(uname)
     if not user:
         st.error("User not found — login again.")
         st.session_state.user = None
@@ -425,11 +435,6 @@ elif st.session_state.page == "Dashboard":
 
     st.header(f"📊 Dashboard — {profile.get('name', uname)}")
     st.markdown("### 💡 Hydration Tip of the Day")
-    FUN = [
-        "💧 Drinking water can boost your mood and energy levels instantly!",
-        "🌿 Your brain is around 75% water — stay hydrated to stay sharp!",
-        "🚰 You lose about 1 litre of water every day just by breathing and sweating."
-    ]
     st.info(random.choice(FUN))
     st.markdown("---")
 
@@ -468,22 +473,16 @@ elif st.session_state.page == "Dashboard":
     st.markdown("---")
     st.subheader("🔄 Reset Today's Progress")
     if st.button("🗑️ Reset Today"):
-        # delete today's logs
-        today_str = date.today().isoformat()
-        docs = user_doc_ref(uname).collection(LOGS_COL).where("date", "==", today_str).stream()
-        deleted = 0
-        for d in docs:
-            d.reference.delete()
-            deleted += 1
-        # remove date from history_dates index
-        ref = user_doc_ref(uname)
-        doc = ref.get().to_dict()
-        dates = set(doc.get("history_dates", []))
-        if today_str in dates:
-            dates.remove(today_str)
-            ref.update({"history_dates": list(dates)})
-        st.success("Today's data cleared.")
-        st.rerun()
+        ds = today_str()
+        if ds in user.get("history", {}):
+            user["history"].pop(ds, None)
+            if update_user_data(uname, user):
+                st.success("Today's data cleared.")
+                st.rerun()
+            else:
+                st.error("Failed to clear data.")
+        else:
+            st.info("No data for today to clear.")
 
 # ---------- LOG WATER ----------
 elif st.session_state.page == "Log Water":
@@ -665,9 +664,8 @@ elif st.session_state.page == "Badges":
     current_streak = 0
     longest_streak = 0
     if dates:
-        # convert to date objects
         date_objs = sorted([datetime.strptime(d, "%Y-%m-%d").date() for d in dates])
-        longest = 0
+        longest = 1
         streak = 1
         prev = date_objs[0]
         longest = 1
@@ -683,10 +681,8 @@ elif st.session_state.page == "Badges":
         # compute current streak (ending on most recent day)
         last = date_objs[-1]
         if (today_date - last).days == 0:
-            # last logged today
             current = 1
             prev = last
-            # go backwards
             for d in reversed(date_objs[:-1]):
                 if (prev - d).days == 1:
                     current += 1
@@ -695,7 +691,6 @@ elif st.session_state.page == "Badges":
                     break
             current_streak = current
         elif (today_date - last).days == 1:
-            # last logged yesterday, check consecutive
             current = 1
             prev = last
             for d in reversed(date_objs[:-1]):
@@ -880,7 +875,3 @@ elif st.session_state.page == "Settings":
                 st.rerun()
         else:
             st.warning("⚠️ Please confirm before deleting your data.")
-
-
-
-
