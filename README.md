@@ -211,6 +211,6 @@ Created by: Harini Priya Karthikeyan (ID: 1000410)
 
 Course: Artificial Intelligence: Real-World Applications and Implications
 
-School: Jain Vidyalaya IB World School, Madurai
+Mentor: Syed Ali Beema.S
 
-Mentor: S
+School: Jain Vidyalaya IB world school, Madurai
