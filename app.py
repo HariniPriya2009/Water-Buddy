@@ -610,7 +610,8 @@ elif st.session_state.page == "Dashboard":
 
     st.header(f"📊 Dashboard — {profile.get('name', uname)}")
     st.markdown("### 💡 Hydration Tip of the Day")
-    st.info(random.choice(FUN))
+    st.markdown(f"<span style='color:#000000;'>{random.choice(FUN)}</span>", unsafe_allow_html=True)
+
     st.markdown("---")
 
     st.markdown(f"### {get_motivational_message(progress_percentage)}")
@@ -941,3 +942,4 @@ elif st.session_state.page == "Settings":
             st.rerun()
         else:
             st.warning("⚠️ Please confirm before deleting your data.")
+
